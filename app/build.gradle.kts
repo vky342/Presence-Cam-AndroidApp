@@ -71,9 +71,17 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
 
     //icons
-    implementation("androidx.compose.material:material-icons-extended:1.7.8")
+    implementation(libs.androidx.material.icons.extended)
 
     //observe as state
     implementation(libs.androidx.runtime.livedata)
+
+    //retrofit
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
+    implementation(libs.okhttp)
+    implementation(libs.logging.interceptor)
+    implementation(libs.coil.compose)
+
 }
 
