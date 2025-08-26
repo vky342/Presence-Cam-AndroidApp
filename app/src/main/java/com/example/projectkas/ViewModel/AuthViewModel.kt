@@ -1,16 +1,27 @@
 package com.example.projectkas.ViewModel
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.projectkas.Network.RetrofitInstance
+import com.example.projectkas.Network.RetrofitInstance.api
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import javax.inject.Inject
+
+
 
 @HiltViewModel
 class AuthViewModel @Inject constructor() : ViewModel()  {
 
-    private val auth = FirebaseAuth.getInstance()
+    val auth = FirebaseAuth.getInstance()
     private val _authState = MutableLiveData<AuthState>()
     val authState: LiveData<AuthState> = _authState
 
@@ -43,19 +54,30 @@ class AuthViewModel @Inject constructor() : ViewModel()  {
             }
     }
 
-    fun signup(email : String,password : String){
-
-        if(email.isEmpty() || password.isEmpty()){
+    fun signup(email: String, password: String) {
+        if (email.isEmpty() || password.isEmpty()) {
             _authState.value = AuthState.Error("Email or password can't be empty")
             return
         }
+
         _authState.value = AuthState.Loading
-        auth.createUserWithEmailAndPassword(email,password)
-            .addOnCompleteListener{task->
-                if (task.isSuccessful){
-                    _authState.value = AuthState.Authenticated
-                }else{
-                    _authState.value = AuthState.Error(task.exception?.message?:"Something went wrong")
+        auth.createUserWithEmailAndPassword(email, password)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    // Firebase signup successful → now create user DB on your server
+                    viewModelScope.launch(Dispatchers.IO) {
+                        try {
+                            val emailPart = email.toRequestBody("text/plain".toMediaTypeOrNull())
+                            val response = api.signup(emailPart)
+//                            val response = api.healthCheck()
+                            Log.d("AuthVM", "Server signup response: ${response.body()?.message}")
+                        } catch (e: Exception) {
+                            Log.e("AuthVM", "Server signup failed: ${e.message}")
+                        }
+                    }
+                    _authState.postValue(AuthState.Authenticated)
+                } else {
+                    _authState.value = AuthState.Error(task.exception?.message ?: "Something went wrong")
                 }
             }
     }

@@ -5,6 +5,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Paint
 import android.graphics.pdf.PdfDocument
 import android.net.Uri
+import android.util.Base64
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
@@ -61,6 +62,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -68,13 +70,15 @@ import coil.size.Size
 import com.example.projectkas.Network.RecognizeResponse
 import com.example.projectkas.Network.RetrofitInstance
 import com.example.projectkas.Network.uriToMultipart
+import com.example.projectkas.ViewModel.AuthViewModel
 import kotlinx.coroutines.launch
 import java.io.File
 
 
 @Composable
-fun Home(navController: NavController){
+fun Home(navController: NavController, authViewModel: AuthViewModel = hiltViewModel()){
 
+    val currentUserEmail = authViewModel.auth.currentUser?.email ?: ""
 
     val context = LocalContext.current
     var selectedPhotoUri by remember { mutableStateOf<Uri?>(null) }
@@ -120,7 +124,7 @@ fun Home(navController: NavController){
     ) { uri: Uri? ->
         uri?.let {
             try {
-                val pdfDocument = android.graphics.pdf.PdfDocument()
+                val pdfDocument = PdfDocument()
                 val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create() // A4 size
                 val page = pdfDocument.startPage(pageInfo)
 
@@ -244,7 +248,10 @@ fun Home(navController: NavController){
                                         "Code: 586 starting to call the api",
                                     )
 
-                                    val response = RetrofitInstance.api.recognize(imagePart)
+                                    val response = RetrofitInstance.api.recognize(
+                                        image = imagePart,
+                                        email = currentUserEmail,
+                                    )
 
                                     Log.d(
                                         "API",
@@ -398,12 +405,11 @@ fun Home(navController: NavController){
 
                 if (imagesBase64.isNotEmpty()) {
                     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
-                    val density = LocalDensity.current
 
                     // Precompute heights for each image
                     val imagesHeights = imagesBase64.map { base64Str ->
                         val imageBytes =
-                            android.util.Base64.decode(base64Str, android.util.Base64.DEFAULT)
+                            Base64.decode(base64Str, Base64.DEFAULT)
                         val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
                         val aspectRatio = bitmap.height.toFloat() / bitmap.width.toFloat()
                         screenWidth * aspectRatio
@@ -417,7 +423,7 @@ fun Home(navController: NavController){
                         itemsIndexed(imagesBase64) { _, base64Str ->
                             // Decode base64 only once into ByteArray
                             val imageBytes = remember(base64Str) {
-                                android.util.Base64.decode(base64Str, android.util.Base64.DEFAULT)
+                                Base64.decode(base64Str, Base64.DEFAULT)
                             }
 
                             AsyncImage(

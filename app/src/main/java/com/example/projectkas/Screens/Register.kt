@@ -49,10 +49,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.projectkas.Network.RetrofitInstance
 import com.example.projectkas.Network.uriToMultipart
+import com.example.projectkas.ViewModel.AuthViewModel
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -61,7 +63,9 @@ import kotlin.collections.plus
 
 
 @Composable
-fun Register(navController: NavController){
+fun Register(navController: NavController, authViewModel: AuthViewModel = hiltViewModel()){
+
+    val currentUserEmail = authViewModel.auth.currentUser?.email ?: ""
 
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -253,7 +257,7 @@ fun Register(navController: NavController){
                             uriToMultipart(context, uri, "images")
                         }
 
-                        val response = RetrofitInstance.api.register(imageParts, enrollPart)
+                        val response = RetrofitInstance.api.register(imageParts, enrollPart, email = currentUserEmail)
 
                         if (response.isSuccessful) {
                             response.body()?.let { body ->

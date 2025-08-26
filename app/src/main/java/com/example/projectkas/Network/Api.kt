@@ -10,6 +10,10 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.Field
+import retrofit2.http.FormUrlEncoded
+import retrofit2.http.GET
+import retrofit2.http.Header
 import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.Part
@@ -27,19 +31,39 @@ data class RegisterResponse(
     val total_students: Int
 )
 
+data class SignupResponse(
+    val message: String
+)
+
+data class HealthResponse(
+    val message: String
+)
+
 interface ApiService {
+
     @Multipart
     @POST("recognize")
     suspend fun recognize(
-        @Part image: MultipartBody.Part
+        @Part image: MultipartBody.Part,
+        @Header("userEmail") email: String // pass user email in header
     ): Response<RecognizeResponse>
 
     @Multipart
     @POST("register")
     suspend fun register(
         @Part images: List<MultipartBody.Part>,
-        @Part("enroll_no") enrollNo: RequestBody
+        @Part("enroll_no") enrollNo: RequestBody,
+        @Header("userEmail") email: String
     ): Response<RegisterResponse>
+
+    @Multipart
+    @POST("signup")
+    suspend fun signup(
+        @Part("email") email: RequestBody
+    ): Response<SignupResponse>
+
+    @GET("/")
+    suspend fun healthCheck(): Response<List<HealthResponse>>
 }
 
 fun uriToMultipart(context: Context, uri: Uri, paramName: String): MultipartBody.Part {
