@@ -10,7 +10,9 @@ import com.example.projectkas.Network.RetrofitInstance.api
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -66,13 +68,16 @@ class AuthViewModel @Inject constructor() : ViewModel()  {
                 if (task.isSuccessful) {
                     // Firebase signup successful → now create user DB on your server
                     viewModelScope.launch(Dispatchers.IO) {
-                        try {
-                            val emailPart = email.toRequestBody("text/plain".toMediaTypeOrNull())
-                            val response = api.signup(emailPart)
+
+                        withContext(NonCancellable) {
+                            try {
+                                val emailPart = email.toRequestBody("text/plain".toMediaTypeOrNull())
+                                val response = api.signup(emailPart)
 //                            val response = api.healthCheck()
-                            Log.d("AuthVM", "Server signup response: ${response.body()?.message}")
-                        } catch (e: Exception) {
-                            Log.e("AuthVM", "Server signup failed: ${e.message}")
+                                Log.d("AuthVM", "Server signup response: ${response.body()?.message}")
+                            } catch (e: Exception) {
+                                Log.e("AuthVM", "Server signup failed: ${e.message}")
+                            }
                         }
                     }
                     _authState.postValue(AuthState.Authenticated)
