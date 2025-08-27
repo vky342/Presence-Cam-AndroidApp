@@ -14,6 +14,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.launch
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
@@ -33,12 +34,17 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -47,9 +53,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -65,6 +73,7 @@ import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import coil.size.Size
 import com.example.projectkas.Network.RecognizeResponse
@@ -81,7 +90,7 @@ fun Home(navController: NavController, authViewModel: AuthViewModel = hiltViewMo
     val currentUserEmail = authViewModel.auth.currentUser?.email ?: ""
 
     val context = LocalContext.current
-    var selectedPhotoUri by remember { mutableStateOf<Uri?>(null) }
+    var selectedPhotoUri by rememberSaveable { mutableStateOf<Uri?>(null) }
     var recognizedList by remember { mutableStateOf(listOf<String>()) }
     var apiResponse by remember { mutableStateOf<RecognizeResponse?>(null) }
     var showAddDialog by remember { mutableStateOf(false) }
@@ -170,8 +179,8 @@ fun Home(navController: NavController, authViewModel: AuthViewModel = hiltViewMo
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                "|❂| Presence Cam",
-                textAlign = TextAlign.Left,
+                "Presence Cam",
+                textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),
                 color = Color(238, 238, 238),
                 style = MaterialTheme.typography.headlineLarge
@@ -217,6 +226,40 @@ fun Home(navController: NavController, authViewModel: AuthViewModel = hiltViewMo
                     )
                 }
             }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            selectedPhotoUri?.let { uri ->
+                Box(
+                    modifier = Modifier
+                        .size(120.dp) // thumbnail size
+                ) {
+                    Image(
+                        painter = rememberAsyncImagePainter(uri),
+                        contentDescription = "Captured Photo",
+                        modifier = Modifier
+                            .matchParentSize()
+                            .clip(RoundedCornerShape(16.dp))
+                            .border(1.dp, Color.Gray, RoundedCornerShape(16.dp))
+                    )
+
+                    IconButton(
+                        onClick = { selectedPhotoUri = null },
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .size(16.dp) // smaller touch area
+                            .background(Color.Black.copy(alpha = 0.6f), CircleShape)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Clear photo",
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp) // smaller icon inside
+                        )
+                    }
+                }
+            }
+
 
             Spacer(modifier = Modifier.height(35.dp))
 

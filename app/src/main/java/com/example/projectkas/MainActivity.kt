@@ -57,7 +57,7 @@ fun KasApp() {
 
     val showBars = currentRoute in bottomBarScreens.map { it.route }
 
-    Scaffold(containerColor = Color(24, 23, 23),
+    Scaffold(containerColor = Color.Transparent,
         topBar = {
             if (showBars) {
                 CustomTopBar()
