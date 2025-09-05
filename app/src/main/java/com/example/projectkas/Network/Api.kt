@@ -1,6 +1,7 @@
 package com.example.projectkas.Network
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.net.Uri
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -10,25 +11,41 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.Field
-import retrofit2.http.FormUrlEncoded
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.Part
+import java.io.File
+import java.io.FileOutputStream
 import java.util.concurrent.TimeUnit
 
+data class RecognizedStudent(
+    val roll_no: String,
+    val name: String?
+)
 
 data class RecognizeResponse(
-    val recognized_ids: List<String>,
-    val annotated_all: String,
-    val annotated_unrecognized: String
+    val recognized_students: List<RecognizedStudent>,
+    val annotated_all: String? = null,          // base64 image (only in debug)
+    val annotated_unrecognized: String? = null  // base64 image (only in debug)
+)
+
+data class DebugRecognizeResponse(
+    val recognized_students: List<RecognizedStudent>,
+    val annotated_all: String?,              // base64 image
+    val annotated_unrecognized: String?      // base64 image
 )
 
 data class RegisterResponse(
     val message: String,
-    val total_students: Int
+    val total_students: Int,
+    val student: Student? // optional: if you want to return the registered student too
+)
+
+data class Student(
+    val roll_no: String,
+    val name: String
 )
 
 data class SignupResponse(
@@ -39,20 +56,33 @@ data class HealthResponse(
     val message: String
 )
 
+data class StudentListResponse(
+    val message: String,
+    val students: List<Student>
+)
+
 interface ApiService {
 
     @Multipart
     @POST("recognize")
     suspend fun recognize(
-        @Part image: MultipartBody.Part,
-        @Header("userEmail") email: String // pass user email in header
+        @Part files: List<MultipartBody.Part>,
+        @Header("userEmail") email: String
     ): Response<RecognizeResponse>
+
+    @Multipart
+    @POST("debugRecognize")
+    suspend fun debugRecognize(
+        @Part files: List<MultipartBody.Part>,
+        @Header("userEmail") email: String
+    ): Response<RecognizeResponse>?
 
     @Multipart
     @POST("register")
     suspend fun register(
         @Part images: List<MultipartBody.Part>,
-        @Part("enroll_no") enrollNo: RequestBody,
+        @Part("Rollno") Rollno: RequestBody,
+        @Part("studentName") studentName: RequestBody, // 👈 new param
         @Header("userEmail") email: String
     ): Response<RegisterResponse>
 
@@ -62,9 +92,15 @@ interface ApiService {
         @Part("email") email: RequestBody
     ): Response<SignupResponse>
 
+    @GET("students")
+    suspend fun listStudents(
+        @Header("userEmail") email: String
+    ): Response<StudentListResponse>
+
     @GET("/")
     suspend fun healthCheck(): Response<List<HealthResponse>>
 }
+
 
 fun uriToMultipart(context: Context, uri: Uri, paramName: String): MultipartBody.Part {
     val inputStream = context.contentResolver.openInputStream(uri)!!
@@ -87,10 +123,38 @@ object RetrofitInstance {
 
     val api: ApiService by lazy {
         Retrofit.Builder()
-            .baseUrl("http://51.20.253.100:8000/")
+            .baseUrl("http://13.202.78.35:80/api/")
             .client(okHttpClient)//
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(ApiService::class.java)
     }
+}
+
+fun resizeAndCompress(
+    bitmap: Bitmap,
+    maxSize: Int = 800, // max width or height in pixels
+    quality: Int = 85   // JPEG quality (0–100)
+): File {
+    val ratio = bitmap.width.toFloat() / bitmap.height.toFloat()
+    val width: Int
+    val height: Int
+
+    if (ratio > 1) {
+        // Landscape
+        width = maxSize
+        height = (maxSize / ratio).toInt()
+    } else {
+        // Portrait
+        height = maxSize
+        width = (maxSize * ratio).toInt()
+    }
+
+    val scaledBitmap = Bitmap.createScaledBitmap(bitmap, width, height, true)
+
+    val file = File.createTempFile("compressed_", ".jpg")
+    FileOutputStream(file).use { out ->
+        scaledBitmap.compress(Bitmap.CompressFormat.JPEG, quality, out)
+    }
+    return file
 }

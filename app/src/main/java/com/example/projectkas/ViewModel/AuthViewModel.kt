@@ -5,16 +5,16 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.projectkas.Network.RetrofitInstance
 import com.example.projectkas.Network.RetrofitInstance.api
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import javax.inject.Inject
 
@@ -24,11 +24,20 @@ import javax.inject.Inject
 class AuthViewModel @Inject constructor() : ViewModel()  {
 
     val auth = FirebaseAuth.getInstance()
+
+    // LiveData style
+    private val _debugMode = MutableStateFlow(false)
+    val debugMode = _debugMode.asStateFlow()
+
     private val _authState = MutableLiveData<AuthState>()
     val authState: LiveData<AuthState> = _authState
 
     init {
         checkAuthStatus()
+    }
+
+    fun setDebugMode(enabled: Boolean) {
+        _debugMode.value = enabled
     }
 
     fun checkAuthStatus(){

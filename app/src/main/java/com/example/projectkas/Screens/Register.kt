@@ -1,10 +1,16 @@
 package com.example.projectkas.Screens
 
 import android.net.Uri
+import android.provider.MediaStore
+import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,46 +19,62 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddAPhoto
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
+import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
+import coil.compose.rememberAsyncImagePainter
 import com.example.projectkas.Network.RetrofitInstance
+import com.example.projectkas.Network.resizeAndCompress
 import com.example.projectkas.Network.uriToMultipart
 import com.example.projectkas.ViewModel.AuthViewModel
 import kotlinx.coroutines.launch
@@ -70,21 +92,26 @@ fun Register(navController: NavController, authViewModel: AuthViewModel = hiltVi
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    var enrollNo by remember { mutableStateOf("") }
-    var selectedUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
+    var Rollno by remember { mutableStateOf("") }
+    var StudentName by remember { mutableStateOf("") }
+    var selectedUris by rememberSaveable { mutableStateOf<List<Uri>>(emptyList()) }
     var apiMessage by remember { mutableStateOf<String?>(null) }
 
     var isLoading by remember { mutableStateOf(false) }
 
     val focusManager = LocalFocusManager.current
 
-    // Gallery picker for multiple images
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenMultipleDocuments(),
         onResult = { uris ->
-            selectedUris = uris.take(3) // only take first 3 if more selected
+            if (uris.isNotEmpty()) {
+                // append new ones, avoid duplicates, max 3
+                selectedUris = (selectedUris + uris).distinct().take(3)
+            }
+            // if uris is empty → do nothing (user cancelled)
         }
     )
+
 
     // --------- CAMERA LAUNCHER ---------
     var currentImageUri by remember { mutableStateOf<Uri?>(null) }
@@ -119,20 +146,31 @@ fun Register(navController: NavController, authViewModel: AuthViewModel = hiltVi
         modifier = Modifier
             .fillMaxSize()
             .background(color = Color(24, 23, 23))
-            .padding(16.dp)
+            .padding(top = 4.dp, start = 16.dp, end = 16.dp, bottom = 4.dp)
             .verticalScroll(rememberScrollState())
         ,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(" ⎣⌆⎦ Student", textAlign = TextAlign.Left, modifier = Modifier.fillMaxWidth(),color = Color(238, 238, 238),style = MaterialTheme.typography.headlineLarge)
-        Text(" Registration",textAlign = TextAlign.Left, modifier = Modifier.fillMaxWidth(),color = Color(238, 238, 238),style = MaterialTheme.typography.headlineLarge)
+        Text(
+            text = "Student Registration",
+            textAlign = TextAlign.Center,
+            color = Color.White,
+            style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
+        )
 
-        Spacer(modifier = Modifier.height(35.dp))
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Divider(
+            color = Color(0xFF468A9A), // teal accent
+            thickness = 2.dp,
+            modifier = Modifier.width(180.dp)
+        )
+        Spacer(modifier = Modifier.height(25.dp))
 
         OutlinedTextField(
-            value = enrollNo,
-            onValueChange = { enrollNo = it },
-            label = { Text("Enroll No") },
+            value = Rollno,
+            onValueChange = { Rollno = it },
+            label = { Text("Roll No") },
             textStyle = TextStyle(fontSize = 18.sp, color = Color.White),
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
@@ -159,155 +197,304 @@ fun Register(navController: NavController, authViewModel: AuthViewModel = hiltVi
             )
         )
 
-        Spacer(modifier = Modifier.height(35.dp))
+        OutlinedTextField(
+            value = StudentName,
+            onValueChange = { StudentName = it },
+            label = { Text("Name") },
+            textStyle = TextStyle(fontSize = 18.sp, color = Color.White),
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color(24, 23, 23),
+                unfocusedContainerColor = Color(24, 23, 23),
 
-        // Upload Images Button
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.LightGray,
 
-        // ---------- IMAGE BUTTONS ----------
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)) {
-            // Upload from gallery
-            Button(
-                modifier = Modifier
-                    .height(50.dp)
-                    .wrapContentWidth()
-                    .shadow(shape = RoundedCornerShape(25), elevation = 4.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(70, 138, 154)),
-                shape = RoundedCornerShape(25),
-                onClick = {
-                    galleryLauncher.launch(arrayOf("image/*"))
+                focusedLabelColor = Color.White,
+                unfocusedLabelColor = Color.Gray,
+
+                focusedIndicatorColor = Color.White,
+                unfocusedIndicatorColor = Color.Gray
+            ),
+            keyboardOptions = KeyboardOptions.Default.copy(
+                imeAction = ImeAction.Done
+            ),
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    focusManager.clearFocus() // Unfocus on Done
                 }
-            ) {
-                Text("⎜▲⎟  Upload", style = MaterialTheme.typography.titleMedium, color = Color.Black)
-            }
-
-            // Capture from camera
-            Button(
-                modifier = Modifier
-                    .height(50.dp)
-                    .wrapContentWidth()
-                    .shadow(shape = RoundedCornerShape(25), elevation = 4.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(138, 154, 70)),
-                shape = RoundedCornerShape(25),
-                onClick = { captureImage() }
-            ) {
-                Text("⎜⏣⎟  Capture", style = MaterialTheme.typography.titleMedium, color = Color.Black)
-            }
-        }
-
-        Spacer(modifier = Modifier.height(35.dp))
-
-        Text(" ▶︎ note ◀︎ ", style = MaterialTheme.typography.titleLarge, color = Color(
-            138,
-            36,
-            36,
-            255
-        )
+            )
         )
 
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
-        Text("please upload three clear close-up photos of your face—one front-facing and two from each side—taken in good lighting so your features are clearly visible.",
-            textAlign = TextAlign.Center,modifier = Modifier.fillMaxWidth(0.8f),style = MaterialTheme.typography.bodyLarge.copy(
-                fontStyle = FontStyle.Italic
-            ), color = Color(89, 88, 88, 255))
-
-        Spacer(modifier = Modifier.height(35.dp))
-
-        // Show selected images
-        if (selectedUris.isNotEmpty()) {
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                items(selectedUris) { uri ->
-                    Card(
-                        modifier = Modifier
-                            .size(100.dp)
-                            .shadow(4.dp, RoundedCornerShape(12.dp)),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        AsyncImage(
-                            model = uri,
-                            contentDescription = "Selected image",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    }
-                }
-            }
-        }
+        MultiImagePickerContainer(
+            selectedUris = selectedUris,
+            onUpload = { galleryLauncher.launch(arrayOf("image/*")) },
+            onCapture = { captureImage() },
+            onClear = { uri -> selectedUris = selectedUris - uri }
+        )
 
         Spacer(modifier = Modifier.height(20.dp))
 
         // Register Button
-        Button(modifier = Modifier.height(50.dp).wrapContentWidth().shadow(shape = RoundedCornerShape(25), elevation = 4.dp),
-            shape = RoundedCornerShape(25),
-            onClick = {
-                coroutineScope.launch {
-                    if (enrollNo.isBlank() || selectedUris.size != 3) {
-                        apiMessage = "Enter enroll no & select 3 images"
-                        return@launch
-                    }
-
-                    isLoading = true
-
-                    try {
-                        val enrollPart = enrollNo.toRequestBody("text/plain".toMediaTypeOrNull())
-                        val imageParts = selectedUris.map { uri ->
-                            uriToMultipart(context, uri, "images")
+        Card(
+            modifier = Modifier
+                .height(55.dp)
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .clickable(
+                    enabled = selectedUris.size <= 3 && Rollno.isNotBlank() && !isLoading
+                ) {
+                    coroutineScope.launch {
+                        if (Rollno.isBlank() || selectedUris.size > 3 || selectedUris.isEmpty()) {
+                            apiMessage = "Enter enroll no & select 3 images"
+                            return@launch
                         }
 
-                        val response = RetrofitInstance.api.register(imageParts, enrollPart, email = currentUserEmail)
+                        isLoading = true
 
-                        if (response.isSuccessful) {
-                            response.body()?.let { body ->
-                                apiMessage = "${body.message} | Total students: ${body.total_students}"
-                                // Reset form
-                                enrollNo = ""
-                                selectedUris = emptyList()
+                        try {
+                            val enrollPart = Rollno.toRequestBody("text/plain".toMediaTypeOrNull())
+                            val studentPart = StudentName.toRequestBody("text/plain".toMediaTypeOrNull())
+
+                            val imageParts = selectedUris.map { uri ->
+                                val bitmap = MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
+                                val compressedFile = resizeAndCompress(bitmap, maxSize = 800, quality = 85)
+                                uriToMultipart(context, compressedFile.toUri(), "images")
                             }
-                        } else {
-                            apiMessage = "API Error: ${response.errorBody()?.string()}"
-                        }
 
-                    } catch (e: Exception) {
-                        apiMessage = "Exception: ${e.localizedMessage}"
-                    } finally {
-                        isLoading = false
+
+                                val response = RetrofitInstance.api.register(
+                                imageParts,
+                                Rollno = enrollPart,
+                                studentName = studentPart,
+                                email = currentUserEmail
+                            )
+
+                            if (response.isSuccessful) {
+                                response.body()?.let { body ->
+                                    apiMessage =
+                                        "${body.message} | Total students: ${body.total_students}"
+                                    // Reset form
+                                    Rollno = ""
+                                    StudentName = ""
+                                    selectedUris = emptyList()
+                                }
+                            } else {
+                                response.errorBody()?.let { Log.e("ERROR",it.string()) }
+                                apiMessage = "API Error: ${response.errorBody()?.string()}"
+                            }
+
+                        } catch (e: Exception) {
+                            apiMessage = "Exception: ${e.localizedMessage}"
+                        } finally {
+                            isLoading = false
+                        }
                     }
+                },
+            shape = RoundedCornerShape(25.dp),
+            elevation = CardDefaults.cardElevation(8.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = when {
+                    isLoading -> Color(0xFF3A3A3A) // dimmed while loading
+                    selectedUris.size == 3 && Rollno.isNotBlank() -> Color(0xFF468A9A) // teal active
+                    else -> Color(0xFF541212) // red inactive
                 }
-            },
-            enabled = selectedUris.size == 3 && enrollNo.isNotBlank() && !isLoading,
-            colors = ButtonDefaults.buttonColors(disabledContainerColor = Color(30, 28, 28, 255),
-                containerColor = if (selectedUris.size == 3) Color(70, 138, 154)
-                else Color(84, 18, 18)
             )
         ) {
-            if (isLoading) {
-                CircularProgressIndicator(
-                    color = Color.White,
-                    strokeWidth = 2.dp,
-                    modifier = Modifier
-                        .size(20.dp)
-                )
-            } else {
-                Text("Register",style = MaterialTheme.typography.titleMedium, color = Color(
-                    0,
-                    0,
-                    0,
-                    255
-                )
-                )
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        color = Color.White,
+                        strokeWidth = 2.dp,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        "Registering...",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.White
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.PersonAdd,
+                        contentDescription = "Register",
+                        tint = Color.Black
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        "Register",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.Black
+                    )
+                }
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Show API message
-        apiMessage?.let {
-            Text(it,  style = MaterialTheme.typography.titleLarge, color = Color(89, 88, 88, 255)
-            )
+        // Observe apiMessage changes
+        apiMessage?.let { message ->
+            LaunchedEffect(message) {
+                Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+            }
         }
+
     }
 
+}
+
+
+@Composable
+fun MultiImagePickerContainer(
+    selectedUris: List<Uri>,
+    onUpload: () -> Unit,
+    onCapture: () -> Unit,
+    onClear: (Uri) -> Unit
+) {
+    var showPickerDialog by remember { mutableStateOf(false) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(Color(0xFF2C2C2C))
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        if (selectedUris.isEmpty()) {
+            // Empty state → upload/capture options
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(
+                    imageVector = Icons.Default.Image,
+                    contentDescription = "Placeholder",
+                    tint = Color.Gray,
+                    modifier = Modifier.size(48.dp)
+                )
+                Spacer(Modifier.height(8.dp))
+                Text("Add photos", color = Color.Gray)
+
+                Spacer(Modifier.height(12.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedButton(onClick = onUpload) {
+                        Icon(Icons.Default.PhotoLibrary, null, tint = Color.White)
+                        Spacer(Modifier.width(6.dp))
+                        Text("Upload", color = Color.White)
+                    }
+                    OutlinedButton(onClick = onCapture) {
+                        Icon(Icons.Default.PhotoCamera, null, tint = Color.White)
+                        Spacer(Modifier.width(6.dp))
+                        Text("Capture", color = Color.White)
+                    }
+                }
+            }
+        } else {
+            // Thumbnails of selected images
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                selectedUris.forEach { uri ->
+                    Box(
+                        modifier = Modifier
+                            .size(90.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                    ) {
+                        Image(
+                            painter = rememberAsyncImagePainter(uri),
+                            contentDescription = "Selected Image",
+                            modifier = Modifier.matchParentSize(),
+                            contentScale = ContentScale.Fit // 👈 keeps full photo visible
+                        )
+                        IconButton(
+                            onClick = { onClear(uri) },
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .background(Color.Black.copy(alpha = 0.6f), CircleShape)
+                                .size(20.dp)
+                        ) {
+                            Icon(Icons.Default.Close, contentDescription = "Remove", tint = Color.White, modifier = Modifier.size(14.dp))
+                        }
+                    }
+                }
+                // Empty slots placeholders (if < 3)
+                // Inside the Row where you show placeholders
+                repeat(3 - selectedUris.size) {
+                    Box(
+                        modifier = Modifier
+                            .size(90.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color.DarkGray.copy(alpha = 0.4f))
+                            .clickable { showPickerDialog = true }, // 👈 show dialog
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(Icons.Default.AddAPhoto, contentDescription = "Add", tint = Color.Gray, modifier = Modifier.size(28.dp))
+                            Text("Add", color = Color.Gray, style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                }
+
+
+            }
+
+            // Progress indicator → e.g. "2/3 selected"
+            Text(
+                text = "${selectedUris.size} / 3 selected",
+                color = Color.White,
+                style = MaterialTheme.typography.bodyMedium
+            )
+
+        }
+
+        Spacer(modifier = Modifier.height(3.dp))
+
+        // Header
+        Text(
+            text = "NOTE",
+            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+            color = Color(0xFFDA5555) // themed red
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Body
+        Text(
+            text = "Please upload between one and three clear close-up photos of your face — ideally one front-facing and, if possible, additional side views — taken in good lighting so your features are clearly visible.",
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.bodySmall.copy(fontStyle = FontStyle.Italic),
+            color = Color(0xFFB0B0B0) // softer gray for readability
+        )
+    }
+
+    // dialog
+    if (showPickerDialog) {
+        AlertDialog(
+            onDismissRequest = { showPickerDialog = false },
+            title = { Text("Add Image") },
+            text = { Text("Choose a method") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showPickerDialog = false
+                    onUpload()
+                }) { Text("Upload") }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showPickerDialog = false
+                    onCapture()
+                }) { Text("Capture") }
+            }
+        )
+    }
 }

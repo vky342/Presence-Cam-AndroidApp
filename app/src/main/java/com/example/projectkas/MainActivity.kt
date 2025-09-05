@@ -152,7 +152,8 @@ fun KasApp() {
                         navController.navigate("auth") {
                             popUpTo("main") { inclusive = true }
                         }
-                    }
+                    },
+                    navController = navController
                 ) }
             }
         }
