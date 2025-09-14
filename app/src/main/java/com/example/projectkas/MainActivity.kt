@@ -18,13 +18,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.projectkas.Screens.Home
 import com.example.projectkas.Screens.Login
+import com.example.projectkas.Screens.ProfileScreen
 import com.example.projectkas.Screens.Register
 import com.example.projectkas.Screens.Settings
 import com.example.projectkas.Screens.SignUp
@@ -55,7 +58,8 @@ fun KasApp() {
     // Screens that should show Scaffold (main graph)
     val bottomBarScreens = listOf(Screen.Home, Screen.Register, Screen.Settings)
 
-    val showBars = currentRoute in bottomBarScreens.map { it.route }
+    val showBars = bottomBarScreens.any { it.route == currentRoute }
+
 
     Scaffold(containerColor = Color.Transparent,
         topBar = {
@@ -155,6 +159,17 @@ fun KasApp() {
                     },
                     navController = navController
                 ) }
+                composable(
+                    route = "${Screen.Profile.route}/{rollNo}/{studentName}",
+                    arguments = listOf(
+                        navArgument("rollNo") { type = NavType.StringType },
+                        navArgument("studentName") { type = NavType.StringType }
+                    )
+                ) { backStackEntry ->
+                    val rollNo = backStackEntry.arguments?.getString("rollNo")
+                    val studentName = backStackEntry.arguments?.getString("studentName")
+                    ProfileScreen(navController = navController, rollNo = rollNo, studentName = studentName)
+                }
             }
         }
     }
@@ -186,5 +201,6 @@ sealed class Screen(val route: String, val title: String, val icon : String) {
     object Home : Screen(route = "⌘", title = "Home", icon = "⌘")
     object Register : Screen(route = "⌆", title = "Register", icon = "⌆")
     object Settings : Screen(route = "⚙︎", title = "Settings", icon = "⚙︎")
-}
+    object Profile : Screen("profile", "Profile", "👤")
 
+}

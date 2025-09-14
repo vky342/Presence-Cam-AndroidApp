@@ -264,7 +264,7 @@ fun Home(
             color = Color(0xFF468A9A), // teal accent
             thickness = 2.dp,
             modifier = Modifier
-                .width(120.dp)
+                .width(180.dp)
                 .align(Alignment.CenterHorizontally)
         )
 

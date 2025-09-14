@@ -1,9 +1,19 @@
 package com.example.projectkas.Screens
 
+
+
+
+
+//Line 241: onDelete = { /* Handle Delete */ }
+//
+//Inside the LazyColumn that displays the list of students, this is where you need to add the logic to handle the deletion of a student record. This will likely involve making an API call and then refreshing the student list.
+
+
 import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,12 +28,18 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -35,12 +51,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -48,6 +62,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.projectkas.Network.RetrofitInstance
 import com.example.projectkas.Network.Student
+import com.example.projectkas.Screen
 import com.example.projectkas.ViewModel.AuthState
 import com.example.projectkas.ViewModel.AuthViewModel
 
@@ -114,122 +129,111 @@ fun Settings(onLogout : () -> Unit,navController: NavController){
         )
         Spacer(modifier = Modifier.height(25.dp))
 
-        if (authState.value is AuthState.Authenticated) {
-            // Profile card
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(8.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C2C))
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.AccountCircle,
-                        contentDescription = "Profile",
-                        modifier = Modifier.size(48.dp),
-                        tint = Color.White
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column {
-                        Text("Logged in as", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
-                        Text(currentUserEmail, color = Color.White, style = MaterialTheme.typography.bodyLarge)
-                    }
-                }
-            }
 
-            Spacer(modifier = Modifier.height(20.dp))
-
+        // Profile card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(8.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C2C))
+        ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp, horizontal = 20.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                    .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "Debug mode",
-                    color = Color.White,
-                    style = MaterialTheme.typography.bodyLarge
+                Icon(
+                    imageVector = Icons.Default.AccountCircle,
+                    contentDescription = "Profile",
+                    modifier = Modifier.size(48.dp),
+                    tint = Color.White
                 )
-                Switch(
-                    checked = debugMode,
-                    onCheckedChange = { authViewModel.setDebugMode(it) },
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = Color(0xFF468A9A),
-                        uncheckedThumbColor = Color.Gray
-                    )
-                )
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // Student table
-            if (isLoading) {
-                CircularProgressIndicator(color = Color.White)
-            } else if (errorMessage != null) {
-                Text(errorMessage ?: "", color = Color.Red)
-            } else {
-                if (students.isNotEmpty()) {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(250.dp),                     // <-- add this so the Card takes remaining space
-                        shape = RoundedCornerShape(12.dp),
-                        elevation = CardDefaults.cardElevation(4.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C2C))
-                    ) {
-                        Column(Modifier.padding(12.dp)) {
-                            Text(
-                                text = "Registered Students",
-                                color = Color.White,
-                                style = MaterialTheme.typography.titleMedium,
-                                modifier = Modifier.padding(bottom = 8.dp)
-                            )
-                            Divider(
-                                color = Color.Gray,
-                                thickness = 1.dp
-                            )
-
-                            LazyColumn(
-                                modifier = Modifier
-                                    .fillMaxSize()           // <-- fill the Card's space
-                            ) {
-                                items(students) { student ->
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(vertical = 12.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Text(
-                                            text = student.roll_no,
-                                            color = Color.White,
-                                            style = MaterialTheme.typography.bodyMedium
-                                        )
-                                        Text(
-                                            text = student.name,
-                                            color = Color.White,
-                                            style = MaterialTheme.typography.bodyMedium
-                                        )
-                                    }
-                                    Divider(
-                                        color = Color.DarkGray,
-                                        thickness = 0.5.dp
-                                    )
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    Text("No students registered.", color = Color.Gray)
+                Spacer(modifier = Modifier.width(12.dp))
+                Column {
+                    Text("Logged in as", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
+                    Text(currentUserEmail, color = Color.White, style = MaterialTheme.typography.bodyLarge)
                 }
             }
         }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp, horizontal = 20.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Debug mode",
+                color = Color.White,
+                style = MaterialTheme.typography.bodyLarge
+            )
+            Switch(
+                checked = debugMode,
+                onCheckedChange = { authViewModel.setDebugMode(it) },
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = Color(0xFF468A9A),
+                    uncheckedThumbColor = Color.Gray
+                )
+            )
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Student table
+        if (isLoading) {
+            CircularProgressIndicator(color = Color.White)
+        } else if (errorMessage != null) {
+            Text(errorMessage ?: "", color = Color.Red)
+        } else {
+            if (students.isNotEmpty()) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(250.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    elevation = CardDefaults.cardElevation(4.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C2C))
+                ) {
+                    Column(Modifier.padding(12.dp)) {
+                        Text(
+                            text = "Registered Students",
+                            color = Color.White,
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        Divider(
+                            color = Color.Gray,
+                            thickness = 1.dp
+                        )
+
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            items(students) { student ->
+                                StudentRow(
+                                    student = student,
+                                    onEdit = {
+                                        navController.navigate("${Screen.Profile.route}/${student.roll_no}/${student.name}")
+                                    },
+                                    onDelete = { /* Handle Delete */ }
+                                )
+                                Divider(
+                                    color = Color.DarkGray,
+                                    thickness = 0.5.dp
+                                )
+                            }
+                        }
+                    }
+                }
+            } else {
+                Text("No students registered.", color = Color.Gray)
+            }
+        }
+
 
         Spacer(modifier = Modifier.weight(1f))
 
@@ -267,5 +271,70 @@ fun Settings(onLogout : () -> Unit,navController: NavController){
     }
 }
 
+@Composable
+fun StudentRow(student: Student, onEdit: () -> Unit, onDelete: () -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
 
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = student.name,
+                color = Color.White,
+                style = MaterialTheme.typography.bodyLarge
+            )
+            Text(
+                text = student.roll_no,
+                color = Color.Gray,
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+
+        Box {
+            IconButton(onClick = { expanded = true }) {
+                Icon(
+                    imageVector = Icons.Default.MoreVert,
+                    contentDescription = "More options",
+                    tint = Color.White
+                )
+            }
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                DropdownMenuItem(
+                    text = { Text("Edit") },
+                    onClick = {
+                        onEdit()
+                        expanded = false
+                    },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Default.Edit,
+                            contentDescription = "Edit"
+                        )
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text("Delete") },
+                    onClick = {
+                        onDelete()
+                        expanded = false
+                    },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = "Delete"
+                        )
+                    }
+                )
+            }
+        }
+    }
+}
 
