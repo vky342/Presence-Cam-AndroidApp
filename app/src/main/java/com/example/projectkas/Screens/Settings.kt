@@ -176,7 +176,9 @@ fun Settings(onLogout : () -> Unit,navController: NavController){
             } else {
                 if (students.isNotEmpty()) {
                     Card(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(250.dp),                     // <-- add this so the Card takes remaining space
                         shape = RoundedCornerShape(12.dp),
                         elevation = CardDefaults.cardElevation(4.dp),
                         colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C2C))
@@ -193,7 +195,10 @@ fun Settings(onLogout : () -> Unit,navController: NavController){
                                 thickness = 1.dp
                             )
 
-                            LazyColumn {
+                            LazyColumn(
+                                modifier = Modifier
+                                    .fillMaxSize()           // <-- fill the Card's space
+                            ) {
                                 items(students) { student ->
                                     Row(
                                         modifier = Modifier

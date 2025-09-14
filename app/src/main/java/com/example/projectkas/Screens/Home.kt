@@ -99,6 +99,7 @@ import com.example.projectkas.ViewModel.AuthViewModel
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
+import java.nio.ByteBuffer
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -130,6 +131,9 @@ fun Home(
     val coroutineScope = rememberCoroutineScope()
     var isLoading by remember { mutableStateOf(false) }
 
+    // NEW: holds the URI that the camera should write the full-res photo to
+    var latestImageUri by remember { mutableStateOf<Uri?>(null) }
+
     // Launcher for gallery
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument(),
@@ -140,15 +144,28 @@ fun Home(
         }
     )
 
-    // Launcher for camera
+
+    fun createImageFileUri(context: Context): Uri {
+        val file = File(context.cacheDir, "camera_photo_${System.currentTimeMillis()}.jpg")
+        try {
+            file.parentFile?.mkdirs()
+            if (!file.exists()) file.createNewFile()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
+    }
+
+
     val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicturePreview(),
-        onResult = { bitmap ->
-            bitmap?.let {
-                val file = File(context.cacheDir, "camera_photo_${System.currentTimeMillis()}.jpg")
-                file.outputStream().use { out -> it.compress(Bitmap.CompressFormat.JPEG, 80, out) }
-                val uri = FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
-                selectedPhotoUris = selectedPhotoUris + uri
+        contract = ActivityResultContracts.TakePicture(),
+        onResult = { success ->
+            if (success) {
+                latestImageUri?.let { uri ->
+                    selectedPhotoUris = selectedPhotoUris + uri
+                }
+            } else {
+                Toast.makeText(context, "Camera cancelled or failed", Toast.LENGTH_SHORT).show()
             }
         }
     )
@@ -256,7 +273,11 @@ fun Home(
         ImagePickerContainer(
             selectedPhotoUris = selectedPhotoUris,
             onAddUpload = { galleryLauncher.launch(arrayOf("image/*")) },
-            onAddCapture = { cameraLauncher.launch() },
+            onAddCapture = {
+                val newUri = createImageFileUri(context)
+                latestImageUri = newUri
+                cameraLauncher.launch(newUri)
+            },
             onRemove = { uri -> selectedPhotoUris = selectedPhotoUris - uri }
         )
 
@@ -938,6 +959,8 @@ fun calculateInSampleSize(options: BitmapFactory.Options, reqWidth: Int, reqHeig
     }
     return inSampleSize
 }
+
+
 
 
 
