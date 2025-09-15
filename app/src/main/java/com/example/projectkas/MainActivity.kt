@@ -60,17 +60,21 @@ fun KasApp() {
     // Screens that should show Scaffold (main graph)
     val bottomBarScreens = listOf(Screen.Home, Screen.Register, Screen.Settings)
 
+    val optionalScreenRoute = "profile/{rollNo}/{studentName}"
+
     val showBars = bottomBarScreens.any { it.route == currentRoute }
 
+    val showTopBars = bottomBarScreens.any { it.route == currentRoute || optionalScreenRoute == currentRoute }
 
-    Scaffold(containerColor = Color.Transparent,
+
+    Scaffold(containerColor = Color(24, 23, 23),
         topBar = {
-            if (showBars) {
+            if (showTopBars) {
                 CustomTopBar()
             }
         },
         bottomBar = {
-            if (showBars) {
+            if (showTopBars) {
                 NavigationBar(containerColor = Color(30, 28, 28)) {
                     bottomBarScreens.forEach { screen ->
                         NavigationBarItem(

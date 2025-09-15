@@ -20,6 +20,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Person
@@ -30,8 +32,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -42,20 +46,15 @@ fun ProfileScreen(navController: NavController, rollNo: String?, studentName: St
     var name by remember { mutableStateOf(studentName ?: "") }
     var roll by remember { mutableStateOf(rollNo ?: "") }
 
+    val focusManager = LocalFocusManager.current
+
     Column(
-        modifier = Modifier
+        Modifier
             .fillMaxSize()
-            .background(Color(24, 23, 23))
+            .background(color = Color(24, 23, 23))
             .padding(top = 4.dp, start = 16.dp, end = 16.dp, bottom = 4.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(
-            text = "⌘",
-            color = Color.White,
-            fontSize = 32.sp, // Made icon smaller
-            style = MaterialTheme.typography.headlineLarge
-        )
-        Spacer(modifier = Modifier.height(8.dp)) // Added padding
         Text(
             text = "Edit Profile",
             fontSize = 24.sp,
@@ -63,6 +62,7 @@ fun ProfileScreen(navController: NavController, rollNo: String?, studentName: St
             color = Color.White,
             style = MaterialTheme.typography.headlineSmall
         )
+
         Spacer(modifier = Modifier.height(4.dp))
         Divider(
             color = Color(0xFF468A9A), // teal accent
@@ -100,13 +100,25 @@ fun ProfileScreen(navController: NavController, rollNo: String?, studentName: St
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color(24, 23, 23),
                 unfocusedContainerColor = Color(24, 23, 23),
+
                 focusedTextColor = Color.White,
                 unfocusedTextColor = Color.LightGray,
+
                 focusedLabelColor = Color.White,
                 unfocusedLabelColor = Color.Gray,
+
                 focusedIndicatorColor = Color.White,
                 unfocusedIndicatorColor = Color.Gray
+            ),
+            keyboardOptions = KeyboardOptions.Default.copy(
+                imeAction = ImeAction.Done
+            ),
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    focusManager.clearFocus() // Unfocus on Done
+                }
             )
+
         )
         Spacer(modifier = Modifier.height(16.dp))
         OutlinedTextField(
@@ -114,17 +126,32 @@ fun ProfileScreen(navController: NavController, rollNo: String?, studentName: St
             onValueChange = { roll = it },
             label = { Text("Roll No") },
             modifier = Modifier.fillMaxWidth(),
-            readOnly = true, // Roll number is usually not editable
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color(24, 23, 23),
                 unfocusedContainerColor = Color(24, 23, 23),
-                disabledTextColor = Color.LightGray,
-                disabledLabelColor = Color.Gray,
-                disabledIndicatorColor = Color.DarkGray
+
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.LightGray,
+
+                focusedLabelColor = Color.White,
+                unfocusedLabelColor = Color.Gray,
+
+                focusedIndicatorColor = Color.White,
+                unfocusedIndicatorColor = Color.Gray
+            ),
+            keyboardOptions = KeyboardOptions.Default.copy(
+                imeAction = ImeAction.Done
+            ),
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    focusManager.clearFocus() // Unfocus on Done
+                }
             )
         )
 
         Spacer(modifier = Modifier.height(32.dp))
+
+        Spacer(modifier = Modifier.weight(1f))
 
         // Action Buttons
         Row(
