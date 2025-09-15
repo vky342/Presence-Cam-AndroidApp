@@ -16,7 +16,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -55,7 +54,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -200,7 +199,7 @@ fun Settings(onLogout : () -> Unit,navController: NavController){
 
         Spacer(modifier = Modifier.height(20.dp))
 
-
+        SearchBarWithHistory()
 
         Spacer(modifier = Modifier.height(20.dp))
 
@@ -224,7 +223,7 @@ fun Settings(onLogout : () -> Unit,navController: NavController){
                             text = "Registered Students",
                             color = Color.White,
                             style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.padding(bottom = 8.dp)
+                            modifier = Modifier.align(Alignment.CenterHorizontally).padding(bottom = 8.dp)
                         )
                         Divider(
                             color = Color.Gray,
@@ -299,7 +298,7 @@ fun StudentRow(student: Student, onEdit: () -> Unit, onDelete: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 12.dp),
+            .padding(vertical = 3.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -384,14 +383,7 @@ fun SearchBarWithHistory(
     }
 
     Column(modifier = modifier.fillMaxWidth()) {
-        Surface(
-            tonalElevation = 6.dp,
-            color = Color(0xFF2C2C2C),
-            shape = RoundedCornerShape(12.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .shadow(elevation = 6.dp, shape = RoundedCornerShape(12.dp))
-        ) {
+
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
@@ -434,13 +426,26 @@ fun SearchBarWithHistory(
                             expanded = false
                         }
                     }),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color(24, 23, 23),
+                        unfocusedContainerColor = Color(24, 23, 23),
+
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.LightGray,
+
+                        focusedLabelColor = Color.White,
+                        unfocusedLabelColor = Color.Gray,
+
+                        focusedIndicatorColor = Color.White,
+                        unfocusedIndicatorColor = Color.Gray
+                    ),
                     shape = RoundedCornerShape(10.dp)
                 )
 
                 Spacer(modifier = Modifier.width(8.dp))
 
             }
-        }
+
 
         // Suggestions dropdown
         AnimatedVisibility(visible = expanded && suggestions.isNotEmpty()) {
