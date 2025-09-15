@@ -481,19 +481,21 @@ fun MultiImagePickerContainer(
     if (showPickerDialog) {
         AlertDialog(
             onDismissRequest = { showPickerDialog = false },
+
             title = { Text("Add Image") },
             text = { Text("Choose a method") },
             confirmButton = {
                 TextButton(onClick = {
                     showPickerDialog = false
-                    onUpload()
-                }) { Text("Upload") }
+                    onCapture()
+                }) { Text("Capture") }
             },
+
             dismissButton = {
                 TextButton(onClick = {
                     showPickerDialog = false
-                    onCapture()
-                }) { Text("Capture") }
+                    onUpload()
+                }) { Text("Upload") }
             }
         )
     }

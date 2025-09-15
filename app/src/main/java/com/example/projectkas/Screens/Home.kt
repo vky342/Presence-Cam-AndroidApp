@@ -52,6 +52,7 @@ import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -488,12 +489,6 @@ fun Home(
 
     }
 
-
-
-
-
-    // ✅ Dialog (theme matched)
-    // ✅ Dialog (theme matched & functional)
     if (showAddDialog) {
         var enrollInput by remember { mutableStateOf("") }
         var nameInput by remember { mutableStateOf("") }
@@ -766,33 +761,29 @@ fun ImagePickerContainer(
                                 },
                                 text = {
                                     Column(
-                                        modifier = Modifier.fillMaxWidth(),
+                                        modifier = Modifier.fillMaxWidth().height(80.dp),
                                         verticalArrangement = Arrangement.spacedBy(16.dp),
                                         horizontalAlignment = Alignment.CenterHorizontally
                                     ) {
-                                        Button(
-                                            onClick = {
-                                                showAddMenu = false
-                                                onAddUpload()
-                                            },
-                                            modifier = Modifier.fillMaxWidth(0.8f)
+
+                                        SmallActionCard(
+                                            text = "Upload from Gallery",
+                                            icon = Icons.Default.UploadFile,
+                                            color = Color(0xFF468A9A),
+                                            modifier = Modifier.weight(1f) // compact
                                         ) {
-                                            Icon(Icons.Default.PhotoLibrary, contentDescription = null)
-                                            Spacer(Modifier.width(8.dp))
-                                            Text("Upload from Gallery")
+                                            showAddMenu = false
+                                            onAddUpload()
                                         }
 
-                                        Button(
-                                            onClick = {
-                                                showAddMenu = false
-                                                onAddCapture()
-                                            },
-                                            modifier = Modifier.fillMaxWidth(0.8f)
-                                        ) {
-                                            Icon(Icons.Default.PhotoCamera, contentDescription = null)
-                                            Spacer(Modifier.width(8.dp))
-                                            Text("Capture with Camera")
-                                        }
+                                        SmallActionCard(
+                                            text = "Capture with Camera",
+                                            icon = Icons.Default.PhotoCamera,
+                                            color = Color(0xFF8A9A46),
+                                            modifier = Modifier.weight(1f)
+                                        ) { showAddMenu = false
+                                            onAddCapture() }
+
                                     }
                                 },
                                 confirmButton = {},

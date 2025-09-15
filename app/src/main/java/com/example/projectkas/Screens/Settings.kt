@@ -1,6 +1,8 @@
 package com.example.projectkas.Screens
 
 import android.annotation.SuppressLint
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -29,6 +31,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -45,6 +48,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -54,12 +58,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -74,6 +80,9 @@ import com.example.projectkas.ViewModel.AuthViewModel
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.projectkas.Network.RetrofitInstance.api
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 
 @SuppressLint("UnrememberedGetBackStackEntry")
 @Composable
@@ -84,6 +93,10 @@ fun Settings(onLogout : () -> Unit,navController: NavController){
 
     val authState = authViewModel.authState.observeAsState()
     val currentUserEmail = authViewModel.auth.currentUser?.email ?: ""
+
+    val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+    var isLoadingDelete by remember { mutableStateOf(false) }
 
     // State for API call
     var query by rememberSaveable { mutableStateOf("") }
@@ -102,6 +115,9 @@ fun Settings(onLogout : () -> Unit,navController: NavController){
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val debugMode by authViewModel.debugMode.collectAsState()
 
+    var showPickerDialog by remember { mutableStateOf(false) }
+    var selectedStudent: Student by remember { mutableStateOf(Student("","","")) }
+
     // Fetch students when authenticated
     LaunchedEffect(authState.value) {
         when (authState.value) {
@@ -112,6 +128,7 @@ fun Settings(onLogout : () -> Unit,navController: NavController){
                     val response = RetrofitInstance.api.listStudents(currentUserEmail)
                     if (response.isSuccessful) {
                         students = response.body()?.students ?: emptyList()
+                        Log.d("debug","" + students.toString())
                     } else {
                         errorMessage = "Error: ${response.errorBody()?.string()}"
                     }
@@ -247,9 +264,12 @@ fun Settings(onLogout : () -> Unit,navController: NavController){
                                 StudentRow(
                                     student = student,
                                     onEdit = {
-                                        navController.navigate("${Screen.Profile.route}/${student.roll_no}/${student.name}")
+                                        navController.navigate("${Screen.Profile.route}/${student.roll_no}/${student.name}/${student.id}")
                                     },
-                                    onDelete = { /* Handle Delete */ }
+                                    onDelete = {
+                                        showPickerDialog = true
+                                        selectedStudent = student
+                                    }
                                 )
                                 Divider(
                                     color = Color.DarkGray,
@@ -298,6 +318,61 @@ fun Settings(onLogout : () -> Unit,navController: NavController){
             }
         }
 
+    }
+
+    if (showPickerDialog) {
+        AlertDialog(
+            onDismissRequest = { showPickerDialog = false },
+
+            title = { Text("Are you sure?") },
+            text = { Text("Selected Student : " + selectedStudent.name) },
+            confirmButton = {
+                TextButton(enabled = selectedStudent != Student("","","") ,onClick = {
+                    showPickerDialog = false
+                    coroutineScope.launch {
+                        isLoadingDelete = true
+                        try {
+                            val response = api.deleteStudentById(
+                                studentId = selectedStudent.id,
+                                email = currentUserEmail
+                            )
+                            if (response.isSuccessful) {
+                                val body = response.body()
+                                Toast.makeText(context, "${body?.message} Total students : ${body?.total_students}", Toast.LENGTH_SHORT).show()
+                                Log.d("debug", body?.message + body?.total_students)
+                            } else {
+                                Toast.makeText(context, "Error: ${response.errorBody()?.string()}", Toast.LENGTH_SHORT).show()
+                            }
+                        } catch (e: Exception) {
+                            Toast.makeText(context, "Failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                        }finally {
+                            isLoadingDelete = false
+                            selectedStudent = Student("","","")
+                        }
+
+                        try {
+                            val response = api.listStudents(currentUserEmail)
+                            if (response.isSuccessful) {
+                                students = response.body()?.students ?: emptyList()
+                                Log.d("debug","" + students.toString())
+                            } else {
+                                errorMessage = "Error: ${response.errorBody()?.string()}"
+                            }
+                        } catch (e: Exception) {
+                            errorMessage = "Exception: ${e.localizedMessage}"
+                        }
+                    }
+
+                }) { Text("Delete", color = Color.Red) }
+            },
+
+            dismissButton = {
+                TextButton(onClick = {
+                    showPickerDialog = false
+                    selectedStudent = Student("","","")
+                }) { Text("Cancel" ,color = Color.Green) }
+            }
+        )
     }
 }
 
