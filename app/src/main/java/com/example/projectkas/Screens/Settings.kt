@@ -1,14 +1,5 @@
 package com.example.projectkas.Screens
 
-
-
-
-
-//Line 241: onDelete = { /* Handle Delete */ }
-//
-//Inside the LazyColumn that displays the list of students, this is where you need to add the logic to handle the deletion of a student record. This will likely involve making an API call and then refreshing the student list.
-
-
 import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
@@ -58,6 +49,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -80,6 +72,7 @@ import com.example.projectkas.Screen
 import com.example.projectkas.ViewModel.AuthState
 import com.example.projectkas.ViewModel.AuthViewModel
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.tooling.preview.Preview
 
 @SuppressLint("UnrememberedGetBackStackEntry")
@@ -93,7 +86,18 @@ fun Settings(onLogout : () -> Unit,navController: NavController){
     val currentUserEmail = authViewModel.auth.currentUser?.email ?: ""
 
     // State for API call
+    var query by rememberSaveable { mutableStateOf("") }
     var students by remember { mutableStateOf<List<Student>>(emptyList()) }
+    val filteredStudents by remember {
+        derivedStateOf {
+            val q = query.trim()
+            if (q.isEmpty()) students.toList()
+            else students.filter { st ->
+                st.roll_no.contains(q, true) ||
+                        st.name.contains(q, true)
+            }
+        }
+    }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val debugMode by authViewModel.debugMode.collectAsState()
@@ -173,12 +177,12 @@ fun Settings(onLogout : () -> Unit,navController: NavController){
             }
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 8.dp, horizontal = 20.dp),
+                .padding(vertical = 2.dp, horizontal = 20.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -197,11 +201,17 @@ fun Settings(onLogout : () -> Unit,navController: NavController){
             )
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
-        SearchBarWithHistory()
+        SimpleSearchBar(
+            query = query,
+            onQueryChange = {
+                query = it
+            },
+            modifier = Modifier.align(Alignment.CenterHorizontally).fillMaxWidth(0.95f),
+        )
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(18.dp))
 
         // Student table
         if (isLoading) {
@@ -209,7 +219,7 @@ fun Settings(onLogout : () -> Unit,navController: NavController){
         } else if (errorMessage != null) {
             Text(errorMessage ?: "", color = Color.Red)
         } else {
-            if (students.isNotEmpty()) {
+            if (filteredStudents.isNotEmpty()) {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -233,7 +243,7 @@ fun Settings(onLogout : () -> Unit,navController: NavController){
                         LazyColumn(
                             modifier = Modifier.fillMaxSize()
                         ) {
-                            items(students) { student ->
+                            items(filteredStudents) { student ->
                                 StudentRow(
                                     student = student,
                                     onEdit = {
@@ -366,8 +376,8 @@ fun StudentRow(student: Student, onEdit: () -> Unit, onDelete: () -> Unit) {
 fun SearchBarWithHistory(
     modifier: Modifier = Modifier,
     historyInitial: List<String> = emptyList(),
-    placeholderText: String = "Search...",
-    onSearch: (String) -> Unit = {}
+    placeholderText: String = "Search student...",
+    onSearch: (String) -> Unit = {},
 ) {
     val focusManager = LocalFocusManager.current
 
@@ -482,4 +492,59 @@ fun SearchBarWithHistory(
         }
     }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SimpleSearchBar(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    placeholder: String = "Search student..."
+) {
+    val focusManager = LocalFocusManager.current
+
+    OutlinedTextField(
+        value = query,
+        onValueChange = { onQueryChange(it) },
+        placeholder = { Text(placeholder) },
+        singleLine = true,
+        leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+        trailingIcon = {
+            if (query.isNotEmpty()) {
+                Icon(
+                    imageVector = Icons.Default.Clear,
+                    contentDescription = "Clear",
+                    modifier = Modifier
+                        .clickable {
+                            onQueryChange("")
+                            focusManager.clearFocus()
+                        }
+                        .padding(8.dp)
+                )
+            }
+        },
+        keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
+        keyboardActions = KeyboardActions(onSearch = {
+            focusManager.clearFocus()
+        }),
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = 52.dp),
+        shape = RoundedCornerShape(10.dp),
+        colors = TextFieldDefaults.colors(
+            focusedContainerColor = Color(24, 23, 23),
+            unfocusedContainerColor = Color(24, 23, 23),
+
+            focusedTextColor = Color.White,
+            unfocusedTextColor = Color.LightGray,
+
+            focusedLabelColor = Color.White,
+            unfocusedLabelColor = Color.Gray,
+
+            focusedIndicatorColor = Color.White,
+            unfocusedIndicatorColor = Color.Gray
+        )
+    )
+}
+
 

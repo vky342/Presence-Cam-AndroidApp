@@ -29,12 +29,11 @@ fun Splash(
             is AuthState.Unauthenticated -> {
                 onAuthCheckComplete(false)
             }
-            // We don’t navigate on Loading/Error – just show UI
             else -> Unit
         }
     }
 
-    // UI while checking
+
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -47,8 +46,6 @@ fun Splash(
                 val errorMessage = (authState as AuthState.Error).message
                 Text(text = "Error: $errorMessage")
             }
-            // While Authenticated/Unauthenticated → NavHost will redirect,
-            // so nothing extra needed here.
             else -> Unit
         }
     }
