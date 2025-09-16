@@ -58,7 +58,7 @@ fun KasApp() {
     // Screens that should show Scaffold (main graph)
     val bottomBarScreens = listOf(Screen.Home, Screen.Register, Screen.Settings)
 
-    val optionalScreenRoute = "profile/{rollNo}/{studentName}"
+    val optionalScreenRoute = "profile/{rollNo}/{studentName}/{id}"
 
     val showBars = bottomBarScreens.any { it.route == currentRoute }
 
@@ -164,15 +164,17 @@ fun KasApp() {
                     navController = navController
                 ) }
                 composable(
-                    route = "${Screen.Profile.route}/{rollNo}/{studentName}",
+                    route = "${Screen.Profile.route}/{rollNo}/{studentName}/{id}",
                     arguments = listOf(
                         navArgument("rollNo") { type = NavType.StringType },
-                        navArgument("studentName") { type = NavType.StringType }
+                        navArgument("studentName") { type = NavType.StringType },
+                        navArgument("id") { type = NavType.StringType }
                     )
                 ) { backStackEntry ->
                     val rollNo = backStackEntry.arguments?.getString("rollNo")
                     val studentName = backStackEntry.arguments?.getString("studentName")
-                    ProfileScreen(navController = navController, rollNo = rollNo, studentName = studentName)
+                    val id = backStackEntry.arguments?.getString("id")
+                    ProfileScreen(navController = navController, rollNo = rollNo, studentName = studentName, id = id)
                 }
             }
         }

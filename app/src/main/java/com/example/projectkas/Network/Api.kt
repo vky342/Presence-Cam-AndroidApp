@@ -19,6 +19,7 @@ import retrofit2.http.Part
 import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.TimeUnit
+import retrofit2.http.*
 
 data class RecognizedStudent(
     val roll_no: String,
@@ -40,10 +41,17 @@ data class DebugRecognizeResponse(
 data class RegisterResponse(
     val message: String,
     val total_students: Int,
-    val student: Student? // optional: if you want to return the registered student too
+    val student: Student?
+)
+
+data class StudentSummary(
+    val id: String,
+    val roll_no: String?,
+    val name: String?
 )
 
 data class Student(
+    val id : String,
     val roll_no: String,
     val name: String
 )
@@ -61,8 +69,54 @@ data class StudentListResponse(
     val students: List<Student>
 )
 
+data class GenericDeleteResponse(
+    val message: String,
+    val total_students: Int? = null
+)
+
+data class UpdateStudentResponse(
+    val message: String,
+    val student: StudentMetadata
+)
+
+data class StudentMetadata(
+    val id: String,
+    val roll_no: String?,
+    val name: String?,
+    val created_at: String? = null,
+    val updated_at: String? = null
+)
+
+data class ReEnrollResponse(
+    val message: String,
+    val student: StudentSummary,
+    val total_students: Int
+)
+
 interface ApiService {
 
+    // Root health-check
+    @GET("/")
+    suspend fun healthCheck(): Response<List<HealthResponse>>
+
+    // signup expects form data: email
+    @FormUrlEncoded
+    @POST("signup")
+    suspend fun signup(
+        @Field("email") email: RequestBody
+    ): Response<SignupResponse>
+
+    // register: multipart with 1..3 image files + Rollno + studentName form fields, header userEmail
+    @Multipart
+    @POST("register")
+    suspend fun register(
+        @Part images: List<MultipartBody.Part>,
+        @Part("Rollno") Rollno: RequestBody,
+        @Part("studentName") studentName: RequestBody,
+        @Header("userEmail") email: String
+    ): Response<RegisterResponse>
+
+    // recognize: multipart images + header
     @Multipart
     @POST("recognize")
     suspend fun recognize(
@@ -70,6 +124,7 @@ interface ApiService {
         @Header("userEmail") email: String
     ): Response<RecognizeResponse>
 
+    // debugRecognize: same as recognize but returns annotated images too
     @Multipart
     @POST("debugRecognize")
     suspend fun debugRecognize(
@@ -77,30 +132,39 @@ interface ApiService {
         @Header("userEmail") email: String
     ): Response<RecognizeResponse>?
 
-    @Multipart
-    @POST("register")
-    suspend fun register(
-        @Part images: List<MultipartBody.Part>,
-        @Part("Rollno") Rollno: RequestBody,
-        @Part("studentName") studentName: RequestBody, // 👈 new param
-        @Header("userEmail") email: String
-    ): Response<RegisterResponse>
-
-    @Multipart
-    @POST("signup")
-    suspend fun signup(
-        @Part("email") email: RequestBody
-    ): Response<SignupResponse>
-
+    // list students (GET) needs header userEmail
     @GET("students")
     suspend fun listStudents(
         @Header("userEmail") email: String
     ): Response<StudentListResponse>
 
-    @GET("/")
-    suspend fun healthCheck(): Response<List<HealthResponse>>
-}
+    // Preferred delete-by-UUID endpoint: /studentDelete expects student_id in form data
+    @FormUrlEncoded
+    @HTTP(method = "DELETE", path = "studentDelete", hasBody = true)
+    suspend fun deleteStudentById(
+        @Field("student_id") studentId: String,
+        @Header("userEmail") email: String
+    ): Response<GenericDeleteResponse>
 
+    // Update metadata by UUID (PUT /studentsUpdate) - form data (fields optional on server)
+    @FormUrlEncoded
+    @PUT("studentsUpdate")
+    suspend fun updateStudentMetadata(
+        @Field("student_id") studentId: String,
+        @Field("roll_no") rollNo: String?, // send null / omit? Retrofit will send "null" as text if you pass null, so pass empty string or overload if needed
+        @Field("name") name: String?,
+        @Header("userEmail") email: String
+    ): Response<UpdateStudentResponse>
+
+    // Re-enroll: replace/update embeddings for an existing student (multipart 1..3 images + student_id form field)
+    @Multipart
+    @POST("students/re-enroll")
+    suspend fun reenrollStudentEmbeddings(
+        @Part images: List<MultipartBody.Part>,
+        @Part("student_id") studentId: RequestBody,
+        @Header("userEmail") email: String
+    ): Response<ReEnrollResponse>
+}
 
 fun uriToMultipart(context: Context, uri: Uri, paramName: String): MultipartBody.Part {
     val inputStream = context.contentResolver.openInputStream(uri)!!
