@@ -3,6 +3,7 @@ package com.example.projectkas.Screens
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -53,6 +54,8 @@ import androidx.navigation.NavController
 import com.example.projectkas.Screen
 import com.example.projectkas.ViewModel.AuthState
 import com.example.projectkas.ViewModel.AuthViewModel
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.ButtonDefaults
 
 
 @Composable
@@ -81,47 +84,23 @@ fun SignUp(onSignUpSuccess : () -> Unit, onNavigateToLogin : () -> Unit, authVie
         }
     }
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.linearGradient(
-                    colors = listOf(
-                        Color(0xFFFAFAFA), // almost white
-                        Color(0xFFE0E0E0), // light grey
-                        Color(0xFF9E9E9E), // medium grey
-                        Color(0xFF212121)  // near black
-                    ),
-                    start = Offset(0f, 0f),
-                    end = Offset(1000f, 1000f)
-                )
-            ),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+            .background(Color.Black),
+        contentAlignment = Alignment.Center
     ) {
-
         Card(
             modifier = Modifier
                 .padding(16.dp)
                 .fillMaxWidth()
                 .wrapContentSize(Alignment.Center)
-                .height(500.dp)
+                .height(480.dp)
                 .clip(RoundedCornerShape(24.dp))
-                .background(
-                    brush = Brush.linearGradient(
-                        colors = listOf(
-                            Color.White.copy(alpha = 0.4f),
-                            Color.White.copy(alpha = 0.15f)
-                        ),
-                        start = Offset(0f, 0f),
-                        end = Offset(500f, 500f)
-                    )
-                )
-                .graphicsLayer {
-                    alpha = 0.8f
-                },
+                .background(Color(0xFF1E1E1E)),
             elevation = CardDefaults.cardElevation(defaultElevation = 16.dp),
-            shape = RoundedCornerShape(24.dp)
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor =  Color(24, 23, 23))
         ) {
 
             Column(
@@ -136,6 +115,7 @@ fun SignUp(onSignUpSuccess : () -> Unit, onNavigateToLogin : () -> Unit, authVie
                     text = "Create Account",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
+                    color = Color.White,
                     modifier = Modifier.padding(bottom = 24.dp)
                 )
 
@@ -143,13 +123,26 @@ fun SignUp(onSignUpSuccess : () -> Unit, onNavigateToLogin : () -> Unit, authVie
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
-                    shape = RoundedCornerShape(20.dp),
-                    label = { Text("Email") },
+                    shape = RoundedCornerShape(25.dp),
+                    label = { Text("Email", color = Color.Gray.copy(alpha = 0.7f)) },
                     singleLine = true,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(shape = RoundedCornerShape(20f), color = Color.Transparent),
-                    leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) }
+                        .padding(horizontal = 8.dp),
+                    leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = Color.Gray.copy(alpha = 0.7f)) },
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color(24, 23, 23),
+                        unfocusedContainerColor = Color(24, 23, 23),
+
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.LightGray,
+
+                        focusedLabelColor = Color.Gray,
+                        unfocusedLabelColor = Color.Gray,
+
+                        focusedIndicatorColor = Color.LightGray,
+                        unfocusedIndicatorColor = Color.Gray
+                    )
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -158,21 +151,34 @@ fun SignUp(onSignUpSuccess : () -> Unit, onNavigateToLogin : () -> Unit, authVie
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
-                    shape = RoundedCornerShape(20.dp),
-                    label = { Text("Password") },
+                    shape = RoundedCornerShape(25.dp),
+                    label = { Text("Password", color = Color.Gray.copy(alpha = 0.7f)) },
                     singleLine = true,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(shape = RoundedCornerShape(20f), color = Color.Transparent),
-                    leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
+                        .padding(horizontal = 8.dp),
+                    leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = Color.Gray.copy(alpha = 0.7f)) },
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
                         val image =
                             if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
                         IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                            Icon(image, contentDescription = null)
+                            Icon(image, contentDescription = null, tint = Color.Gray.copy(alpha = 0.7f))
                         }
-                    }
+                    },
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color(24, 23, 23),
+                        unfocusedContainerColor = Color(24, 23, 23),
+
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.LightGray,
+
+                        focusedLabelColor = Color.Gray,
+                        unfocusedLabelColor = Color.Gray,
+
+                        focusedIndicatorColor = Color.LightGray,
+                        unfocusedIndicatorColor = Color.Gray
+                    )
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -181,21 +187,34 @@ fun SignUp(onSignUpSuccess : () -> Unit, onNavigateToLogin : () -> Unit, authVie
                 OutlinedTextField(
                     value = confirmPassword,
                     onValueChange = { confirmPassword = it },
-                    shape = RoundedCornerShape(20.dp),
-                    label = { Text("Confirm Password") },
+                    shape = RoundedCornerShape(25.dp),
+                    label = { Text("Confirm Password", color = Color.Gray.copy(alpha = 0.7f)) },
                     singleLine = true,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(shape = RoundedCornerShape(20f), color = Color.Transparent),
-                    leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
+                        .padding(horizontal = 8.dp),
+                    leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = Color.Gray.copy(alpha = 0.7f)) },
                     visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
                         val image =
                             if (confirmPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
                         IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
-                            Icon(image, contentDescription = null)
+                            Icon(image, contentDescription = null, tint = Color.Gray.copy(alpha = 0.7f))
                         }
-                    }
+                    },
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color(24, 23, 23),
+                        unfocusedContainerColor = Color(24, 23, 23),
+
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.LightGray,
+
+                        focusedLabelColor = Color.Gray,
+                        unfocusedLabelColor = Color.Gray,
+
+                        focusedIndicatorColor = Color.LightGray,
+                        unfocusedIndicatorColor = Color.Gray
+                    )
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -212,29 +231,34 @@ fun SignUp(onSignUpSuccess : () -> Unit, onNavigateToLogin : () -> Unit, authVie
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(50.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    enabled = authState.value != AuthState.Loading
+                        .height(50.dp)
+                        .padding(horizontal = 8.dp),
+                    shape = RoundedCornerShape(25.dp),
+                    enabled = authState.value != AuthState.Loading,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(40, 38, 38, 255))
                 ) {
                     if (authState.value == AuthState.Loading) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(20.dp),
                             strokeWidth = 2.dp,
-                            color = Color.White
+                            color = Color.Black
                         )
                     } else {
-                        Text("Sign Up")
+                        Text("Sign Up", color = Color.White)
                     }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Already have account? Login
-                TextButton(onClick = {
-                    onNavigateToLogin()
-                }
+                TextButton(
+                    onClick = { onNavigateToLogin() },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                        .padding(horizontal = 8.dp)
                 ) {
-                    Text("Already have an account? Login")
+                    Text("Already have an account? Login", color = Color.White)
                 }
             }
         }
