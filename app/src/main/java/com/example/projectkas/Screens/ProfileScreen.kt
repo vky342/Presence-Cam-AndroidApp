@@ -1,24 +1,12 @@
 package com.example.projectkas.Screens
 
-
-
-//Line 66: TextButton(onClick = { /* Handle Edit Picture */ })
-//
-//You need to add the logic here to allow the user to select or capture a new profile picture for the student.
-//
-//Line 131: onClick = { /* Handle Save */ }
-//
-//This is inside the "Save" button. You'll need to add the code to save any changes made to the student's name. This will likely involve making an API call to your backend.
-//
-//Line 147: onClick = { /* Handle Delete */ }
-//
-//This is inside the "Delete" button. You'll need to implement the logic to delete the student's record, which will also require an API call.
-
-
-
 import android.annotation.SuppressLint
+import android.net.Uri
+import android.provider.MediaStore
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -43,16 +31,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.projectkas.Network.RetrofitInstance
 import com.example.projectkas.Network.RetrofitInstance.api
 import com.example.projectkas.Network.Student
+import com.example.projectkas.Network.resizeAndCompress
+import com.example.projectkas.Network.uriToMultipart
 import com.example.projectkas.R
 import com.example.projectkas.Screen
 import com.example.projectkas.ViewModel.AuthState
 import com.example.projectkas.ViewModel.AuthViewModel
 import kotlinx.coroutines.launch
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody.Companion.toRequestBody
 
 @SuppressLint("UnrememberedGetBackStackEntry")
 @Composable
@@ -75,6 +68,7 @@ fun ProfileScreen(navController: NavController, rollNo: String?, studentName: St
     val focusManager = LocalFocusManager.current
 
     var showPickerDialog by remember { mutableStateOf(false) }
+    var showReEnrollDialog by remember { mutableStateOf(false) }
 
     Column(
         Modifier
@@ -113,7 +107,7 @@ fun ProfileScreen(navController: NavController, rollNo: String?, studentName: St
                 modifier = Modifier.size(80.dp)
             )
         }
-        TextButton(onClick = { /* Handle Edit Picture */ }) {
+        TextButton(onClick = { showReEnrollDialog = true }) {
             Text("Edit")
         }
 
@@ -331,5 +325,81 @@ fun ProfileScreen(navController: NavController, rollNo: String?, studentName: St
             }
         )
     }
-}
 
+    if (showReEnrollDialog) {
+        var selectedUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
+        var isLoadingReenroll by remember { mutableStateOf(false) }
+
+        val galleryLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.OpenMultipleDocuments(),
+            onResult = { uris ->
+                if (uris.isNotEmpty()) {
+                    selectedUris = (selectedUris + uris).distinct().take(3)
+                }
+            }
+        )
+
+        AlertDialog(
+            onDismissRequest = { showReEnrollDialog = false },
+            title = { Text("Update Image") },
+            text = {
+                Column {
+                    MultiImagePickerContainer(
+                        selectedUris = selectedUris,
+                        onUpload = { galleryLauncher.launch(arrayOf("image/*")) },
+                        onCapture = { /* TODO: Implement camera capture */ },
+                        onClear = { uri -> selectedUris = selectedUris - uri }
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        coroutineScope.launch {
+                            isLoadingReenroll = true
+                            try {
+                                val imageParts = selectedUris.map { uri ->
+                                    val bitmap = MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
+                                    val compressedFile = resizeAndCompress(bitmap, maxSize = 800, quality = 85)
+                                    uriToMultipart(context, compressedFile.toUri(), "images")
+                                }
+                                val studentIdPart = id.toRequestBody("text/plain".toMediaTypeOrNull())
+                                val response = api.reenrollStudentEmbeddings(
+                                    images = imageParts,
+                                    studentId = studentIdPart,
+                                    email = currentUserEmail
+                                )
+                                if (response.isSuccessful) {
+                                    Toast.makeText(context, "Re-enrolled successfully", Toast.LENGTH_SHORT).show()
+                                    showReEnrollDialog = false
+                                } else {
+                                    Toast.makeText(context, "Error: ${response.errorBody()?.string()}", Toast.LENGTH_SHORT).show()
+                                }
+                            } catch (e: Exception) {
+                                Toast.makeText(context, "Failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                            } finally {
+                                isLoadingReenroll = false
+                            }
+                        }
+                    },
+                    enabled = selectedUris.isNotEmpty() && !isLoadingReenroll
+                ) {
+                    if (isLoadingReenroll) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                    } else {
+                        Text("Submit")
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showReEnrollDialog = false }) {
+                    Text("Cancel")
+                }
+            },
+//            modifier = Modifier
+//                .fillMaxWidth(1f)   // makes width 90% of screen
+
+
+        )
+    }
+}
