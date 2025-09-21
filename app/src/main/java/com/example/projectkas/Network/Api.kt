@@ -8,6 +8,7 @@ import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -164,7 +165,16 @@ interface ApiService {
         @Part("student_id") studentId: RequestBody,
         @Header("userEmail") email: String
     ): Response<ReEnrollResponse>
+
+    @Multipart
+    @POST("images/get")
+    suspend fun getImageByUuidMultipart(
+        @Part("uuid") uuidPart: RequestBody
+    ): Response<ResponseBody>
 }
+
+fun uuidRequestBody(uuid: String): RequestBody =
+    uuid.toRequestBody("text/plain".toMediaTypeOrNull())
 
 fun uriToMultipart(context: Context, uri: Uri, paramName: String): MultipartBody.Part {
     val inputStream = context.contentResolver.openInputStream(uri)!!
@@ -187,7 +197,7 @@ object RetrofitInstance {
 
     val api: ApiService by lazy {
         Retrofit.Builder()
-            .baseUrl("http://13.204.92.135/api/")
+            .baseUrl("http://13.203.23.35/api/")
             .client(okHttpClient)//
             .addConverterFactory(GsonConverterFactory.create())
             .build()
