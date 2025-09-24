@@ -159,7 +159,7 @@ interface ApiService {
 
     // Re-enroll: replace/update embeddings for an existing student (multipart 1..3 images + student_id form field)
     @Multipart
-    @POST("students/re-enroll")
+    @PUT("students/re-enroll")
     suspend fun reenrollStudentEmbeddings(
         @Part images: List<MultipartBody.Part>,
         @Part("student_id") studentId: RequestBody,
@@ -172,9 +172,6 @@ interface ApiService {
         @Part("uuid") uuidPart: RequestBody
     ): Response<ResponseBody>
 }
-
-fun uuidRequestBody(uuid: String): RequestBody =
-    uuid.toRequestBody("text/plain".toMediaTypeOrNull())
 
 fun uriToMultipart(context: Context, uri: Uri, paramName: String): MultipartBody.Part {
     val inputStream = context.contentResolver.openInputStream(uri)!!
@@ -197,7 +194,7 @@ object RetrofitInstance {
 
     val api: ApiService by lazy {
         Retrofit.Builder()
-            .baseUrl("http://13.203.23.35/api/")
+            .baseUrl("http://52.66.223.237/api/")
             .client(okHttpClient)//
             .addConverterFactory(GsonConverterFactory.create())
             .build()
@@ -207,8 +204,8 @@ object RetrofitInstance {
 
 fun resizeAndCompress(
     bitmap: Bitmap,
-    maxSize: Int = 800, // max width or height in pixels
-    quality: Int = 85   // JPEG quality (0–100)
+    maxSize: Int = 800,
+    quality: Int = 85
 ): File {
     val ratio = bitmap.width.toFloat() / bitmap.height.toFloat()
     val width: Int

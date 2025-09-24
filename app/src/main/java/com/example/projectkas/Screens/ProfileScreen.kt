@@ -3,24 +3,37 @@ package com.example.projectkas.Screens
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.net.Uri
+import android.provider.MediaStore
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
@@ -28,9 +41,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.FileProvider
+import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.projectkas.Network.RetrofitInstance
 import com.example.projectkas.Network.RetrofitInstance.api
+import com.example.projectkas.Network.resizeAndCompress
+import com.example.projectkas.Network.uriToMultipart
 import com.example.projectkas.R
 import retrofit2.Response
 import okhttp3.ResponseBody
@@ -41,7 +59,9 @@ import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import java.io.File
 
+@OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnrememberedGetBackStackEntry")
 @Composable
 fun ProfileScreen(navController: NavController, rollNo: String?, studentName: String?, id : String?) {
@@ -68,6 +88,49 @@ fun ProfileScreen(navController: NavController, rollNo: String?, studentName: St
     var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
 
+    // image picker container
+    var showReEnroll by remember { mutableStateOf(false) }
+    var selectedUris by rememberSaveable { mutableStateOf<List<Uri>>(emptyList()) }
+    var apiMessage by remember { mutableStateOf<String?>(null) }
+
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenMultipleDocuments(),
+        onResult = { uris ->
+            if (uris.isNotEmpty()) {
+                // append new ones, avoid duplicates, max 3
+                selectedUris = (selectedUris + uris).distinct().take(3)
+            }
+            // if uris is empty → do nothing (user cancelled)
+        }
+    )
+    // --------- CAMERA LAUNCHER ---------
+    var currentImageUri by remember { mutableStateOf<Uri?>(null) }
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success && currentImageUri != null) {
+            if (selectedUris.size < 3) {
+                selectedUris = selectedUris + currentImageUri!!
+            }
+        }
+    }
+
+    fun captureImage() {
+        if (selectedUris.size < 3) {
+            val file = File.createTempFile(
+                "image_${System.currentTimeMillis()}",
+                ".jpg",
+                context.cacheDir
+            )
+            val uri = FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.provider",
+                file
+            )
+            currentImageUri = uri
+            cameraLauncher.launch(uri)
+        }
+    }
 
     LaunchedEffect(key1 = id) {
         if (id.isBlank()) return@LaunchedEffect
@@ -160,7 +223,7 @@ fun ProfileScreen(navController: NavController, rollNo: String?, studentName: St
         }
         TextButton(onClick = {
 
-        /* Handle Edit Picture */
+        showReEnroll = true
 
         }) {
             Text("Edit")
@@ -380,5 +443,142 @@ fun ProfileScreen(navController: NavController, rollNo: String?, studentName: St
             }
         )
     }
+
+    if (showReEnroll) {
+        BackHandler(enabled = true) {
+            showReEnroll = false
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                // draw a faint scrim so user knows it's modal
+                .background(Color.Black.copy(alpha = 0.3f))
+                // intercept taps
+                .pointerInput(Unit) {
+                    detectTapGestures(onTap = { showReEnroll = false })
+                }
+        ) {
+            Column (modifier = Modifier
+                .align(Alignment.Center)
+                .clip(RoundedCornerShape(16.dp))
+                .wrapContentSize()
+                .padding(16.dp)
+                .background(Color(0xFF2C2C2C), shape = RoundedCornerShape(16.dp))) {
+                MultiImagePickerContainer(
+                    selectedUris = selectedUris,
+                    onUpload = { galleryLauncher.launch(arrayOf("image/*")) },
+                    onCapture = { captureImage() },
+                    onClear = { uri -> selectedUris = selectedUris - uri }
+                )
+                // Register Button
+                Card(
+                    modifier = Modifier
+                        .height(55.dp)
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .clickable(
+                            enabled = selectedUris.size <= 3 && selectedUris.isNotEmpty() && !isLoading
+                        ) {
+                            coroutineScope.launch {
+                                if (selectedUris.size > 3 || selectedUris.isEmpty()) {
+                                    apiMessage = "Enter enroll no & select 3 images"
+                                    return@launch
+                                }
+
+                                isLoading = true
+
+                                try {
+                                    val idPart = id.toRequestBody("text/plain".toMediaTypeOrNull())
+
+                                    val imageParts = selectedUris.map { uri ->
+                                        val bitmap = MediaStore.Images.Media.getBitmap(
+                                            context.contentResolver,
+                                            uri
+                                        )
+                                        val compressedFile =
+                                            resizeAndCompress(bitmap, maxSize = 800, quality = 85)
+                                        uriToMultipart(context, compressedFile.toUri(), "images")
+                                    }
+
+
+                                    val response = api.reenrollStudentEmbeddings(
+                                        images = imageParts,
+                                        studentId = idPart,
+                                        email = currentUserEmail
+                                    )
+
+                                    if (response.isSuccessful) {
+                                        response.body()?.let { body ->
+                                            Toast.makeText(context, "${body.message} | ${body.total_students}", Toast.LENGTH_SHORT).show()
+                                            showReEnroll = false
+                                        }
+                                    } else {
+                                        response.errorBody()?.let { Log.e("ERROR", it.string()) }
+                                        response.errorBody()?.let {
+                                            Toast.makeText(
+                                                context,
+                                                it.string(),
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                    }
+
+                                } catch (e: Exception) {
+                                    apiMessage = "Exception: ${e.localizedMessage}"
+                                } finally {
+                                    isLoading = false
+                                    showReEnroll = false
+                                }
+                            }
+                        },
+                    shape = RoundedCornerShape(25.dp),
+                    elevation = CardDefaults.cardElevation(8.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = when {
+                            isLoading -> Color(0xFF3A3A3A) // dimmed while loading
+                            selectedUris.size <= 3 && selectedUris.isNotEmpty() -> Color(0xFF468A9A) // teal active
+                            else -> Color(0xFF541212) // red inactive
+                        }
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                color = Color.White,
+                                strokeWidth = 2.dp,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                "Registering...",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = Color.White
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.PersonAdd,
+                                contentDescription = "Register",
+                                tint = Color.Black
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                "Register",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = Color.Black
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+        }
+    }
+
 }
 
