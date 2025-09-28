@@ -1,5 +1,7 @@
 package com.example.projectkas
 
+import android.content.Context
+import android.content.ContextWrapper
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -18,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -25,6 +28,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.projectkas.Module.LanguageRepository
 import com.example.projectkas.Screens.Home
 import com.example.projectkas.Screens.Login
 import com.example.projectkas.Screens.ProfileScreen
@@ -32,15 +36,33 @@ import com.example.projectkas.Screens.Register
 import com.example.projectkas.Screens.Settings
 import com.example.projectkas.Screens.SignUp
 import com.example.projectkas.Screens.Splash
+import com.example.projectkas.ui.theme.LocaleHelper
 import com.example.projectkas.ui.theme.ProjectKASTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
+import java.util.Locale
 
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    override fun attachBaseContext(newBase: Context) {
+        // Construct a lightweight LanguageRepository manually,
+        // since Hilt isn't available yet during attachBaseContext.
+        val repo = LanguageRepository(newBase)
+
+        val language = runBlocking {
+            repo.getLanguageFlow().first() ?: Locale.getDefault().language
+        }
+
+        val context = LocaleHelper.wrap(newBase, language)
+        super.attachBaseContext(context)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        enableEdgeToEdge() // keep your helper if you have one
         setContent {
             ProjectKASTheme {
                 KasApp()
@@ -63,9 +85,9 @@ fun KasApp() {
     val showBars = bottomBarScreens.any { it.route == currentRoute }
 
     val showTopBars = bottomBarScreens.any { it.route == currentRoute || optionalScreenRoute == currentRoute }
+    val activity = LocalContext.current.findActivity()
 
-
-    Scaffold(containerColor = Color(24, 23, 23),
+    Scaffold(containerColor = Color(0xFF181717),
         topBar = {
             if (showTopBars) {
                 CustomTopBar()
@@ -156,6 +178,15 @@ fun KasApp() {
                 composable(Screen.Home.route) { Home(navController) }
                 composable(Screen.Register.route) { Register(navController) }
                 composable(Screen.Settings.route) { Settings(
+                    onLocaleApplied = { langCode ->
+                        // apply new locale and restart activity to pick up resources
+                        activity?.let { act ->
+                            // wrap the base context (optional but helpful)
+                            LocaleHelper.wrap(act, langCode)
+                            // restart activity to reload resources / recomposition
+                            act.recreate()
+                        }
+                    },
                     onLogout = {
                         navController.navigate("auth") {
                             popUpTo("main") { inclusive = true }
@@ -210,3 +241,12 @@ sealed class Screen(val route: String, val title: String, val icon : String) {
     object Profile : Screen("profile", "Profile", "👤")
 
 }
+
+
+fun Context.findActivity(): ComponentActivity? = when (this) {
+    is ComponentActivity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
+}
+
+

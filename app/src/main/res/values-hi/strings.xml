@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">मेरा ऐप</string>
+    <string name="settings_language">भाषा</string>
+    <string name="language_english">अंग्रेज़ी</string>
+    <string name="language_hindi">हिन्दी</string>
+    <!-- translated strings -->
+</resources>

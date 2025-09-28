@@ -32,7 +32,6 @@ import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -44,6 +43,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -63,10 +64,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -78,15 +81,19 @@ import com.example.projectkas.Screen
 import com.example.projectkas.ViewModel.AuthState
 import com.example.projectkas.ViewModel.AuthViewModel
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.projectkas.Network.RetrofitInstance.api
-import kotlinx.coroutines.coroutineScope
+import com.example.projectkas.R
+import com.example.projectkas.ViewModel.SettingsViewModel
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 @SuppressLint("UnrememberedGetBackStackEntry")
 @Composable
-fun Settings(onLogout : () -> Unit,navController: NavController){
+fun Settings(onLogout : () -> Unit,
+             onLocaleApplied: (String) -> Unit,
+             viewModel: SettingsViewModel = hiltViewModel(),
+             navController: NavController){
 
     val parentEntry = remember(navController) { navController.getBackStackEntry("main") }
     val authViewModel: AuthViewModel = hiltViewModel(parentEntry)
@@ -97,6 +104,9 @@ fun Settings(onLogout : () -> Unit,navController: NavController){
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     var isLoadingDelete by remember { mutableStateOf(false) }
+
+    val currentLang by viewModel.currentLang.collectAsState()
+    val ctx = LocalContext.current
 
     // State for API call
     var query by rememberSaveable { mutableStateOf("") }
@@ -194,7 +204,13 @@ fun Settings(onLogout : () -> Unit,navController: NavController){
             }
         }
 
-        Spacer(modifier = Modifier.height(14.dp))
+        LanguageRow(
+            currentLangFromVm = currentLang,
+            onSetLanguage = { code -> viewModel.setLanguage(code) },
+            onLocaleApplied = onLocaleApplied
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         Row(
             modifier = Modifier
@@ -621,5 +637,88 @@ fun SimpleSearchBar(
         )
     )
 }
+
+@Composable
+fun LanguageRow(
+    currentLangFromVm: String?,               // observed from your ViewModel (StateFlow / LiveData)
+    onSetLanguage: (String) -> Unit,          // calls viewModel.setLanguage(...)
+    onLocaleApplied: (String) -> Unit
+) {
+    val initial = currentLangFromVm ?: Locale.getDefault().language
+    var selected by rememberSaveable { mutableStateOf(initial) }
+
+    // If ViewModel updates (e.g. after process restart), keep local state in sync:
+    LaunchedEffect(currentLangFromVm) {
+        currentLangFromVm?.let { selected = it }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 16.dp)
+    ) {
+        Text(
+            text = stringResource(R.string.settings_language),
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        val languages = listOf(
+            "en" to stringResource(R.string.language_english),
+            "hi" to stringResource(R.string.language_hindi)
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            languages.forEach { (code, label) ->
+                // Single clickable target (the whole pill)
+                val isSelected = selected == code
+                Row(
+                    modifier = Modifier
+                        .clip(MaterialTheme.shapes.small)
+                        .clickable(
+                            // single handler; no duplicate clicks
+                            onClick = {
+                                // Update UI immediately
+                                selected = code
+
+                                // Persist and apply locale
+                                onSetLanguage(code)
+                                onLocaleApplied(code)
+                            },
+                            role = Role.RadioButton
+                        )
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Make RadioButton non-interactive to avoid double-handling:
+                    RadioButton(
+                        selected = isSelected,
+                        onClick = null, // handled by parent Row
+                        modifier = Modifier.size(20.dp),
+                        colors = RadioButtonDefaults.colors(
+                            selectedColor = MaterialTheme.colorScheme.primary,
+                            unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.width(4.dp))
+
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+        }
+    }
+}
+
 
 

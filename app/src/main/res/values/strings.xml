@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">ProjectKAS</string>
+    <string name="settings_language">Language</string>
+    <string name="language_english">English</string>
+    <string name="language_hindi">Hindi</string>
 </resources>
