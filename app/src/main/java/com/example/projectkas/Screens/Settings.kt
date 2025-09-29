@@ -128,11 +128,22 @@ fun Settings(onLogout : () -> Unit,
     var showPickerDialog by remember { mutableStateOf(false) }
     var selectedStudent: Student by remember { mutableStateOf(Student("","","")) }
 
+
+
+
+
     // Fetch students when authenticated
     LaunchedEffect(authState.value) {
         when (authState.value) {
             is AuthState.Unauthenticated -> onLogout()
             is AuthState.Authenticated -> {
+
+//                students = listOf(
+//                    Student(id = "1", roll_no = "101", name = "John Doe"),
+//                    Student(id = "2", roll_no = "102", name = "Jane Smith"),
+//                    Student(id = "3", roll_no = "103", name = "Peter Jones")
+//                )
+
                 isLoading = true
                 try {
                     val response = RetrofitInstance.api.listStudents(currentUserEmail)

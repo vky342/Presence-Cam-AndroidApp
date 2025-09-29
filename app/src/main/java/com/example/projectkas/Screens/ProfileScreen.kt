@@ -581,4 +581,3 @@ fun ProfileScreen(navController: NavController, rollNo: String?, studentName: St
     }
 
 }
-

@@ -140,7 +140,7 @@ fun Login(onLoginSuccess : () -> Unit,onNavigateToSignUp : () -> Unit , authView
                         focusedContainerColor = Color(24, 23, 23),
                         unfocusedContainerColor = Color(24, 23, 23),
 
-                        focusedTextColor = Color.Gray,
+                        focusedTextColor = Color.White,
                         unfocusedTextColor = Color.Gray,
 
                         focusedLabelColor = Color.White,
