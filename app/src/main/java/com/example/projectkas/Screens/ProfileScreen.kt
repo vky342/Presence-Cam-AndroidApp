@@ -1,29 +1,39 @@
 package com.example.projectkas.Screens
 
 import android.annotation.SuppressLint
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.provider.MediaStore
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
@@ -31,22 +41,27 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.projectkas.Network.RetrofitInstance
 import com.example.projectkas.Network.RetrofitInstance.api
-import com.example.projectkas.Network.Student
 import com.example.projectkas.Network.resizeAndCompress
 import com.example.projectkas.Network.uriToMultipart
 import com.example.projectkas.R
-import com.example.projectkas.Screen
-import com.example.projectkas.ViewModel.AuthState
+import retrofit2.Response
+import okhttp3.ResponseBody
 import com.example.projectkas.ViewModel.AuthViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import java.io.File
 
+@OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnrememberedGetBackStackEntry")
 @Composable
 fun ProfileScreen(navController: NavController, rollNo: String?, studentName: String?, id : String?) {
@@ -68,7 +83,98 @@ fun ProfileScreen(navController: NavController, rollNo: String?, studentName: St
     val focusManager = LocalFocusManager.current
 
     var showPickerDialog by remember { mutableStateOf(false) }
-    var showReEnrollDialog by remember { mutableStateOf(false) }
+
+    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var loading by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
+
+    // image picker container
+    var showReEnroll by remember { mutableStateOf(false) }
+    var selectedUris by rememberSaveable { mutableStateOf<List<Uri>>(emptyList()) }
+    var apiMessage by remember { mutableStateOf<String?>(null) }
+
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenMultipleDocuments(),
+        onResult = { uris ->
+            if (uris.isNotEmpty()) {
+                // append new ones, avoid duplicates, max 3
+                selectedUris = (selectedUris + uris).distinct().take(3)
+            }
+            // if uris is empty → do nothing (user cancelled)
+        }
+    )
+    // --------- CAMERA LAUNCHER ---------
+    var currentImageUri by remember { mutableStateOf<Uri?>(null) }
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success && currentImageUri != null) {
+            if (selectedUris.size < 3) {
+                selectedUris = selectedUris + currentImageUri!!
+            }
+        }
+    }
+
+    fun captureImage() {
+        if (selectedUris.size < 3) {
+            val file = File.createTempFile(
+                "image_${System.currentTimeMillis()}",
+                ".jpg",
+                context.cacheDir
+            )
+            val uri = FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.provider",
+                file
+            )
+            currentImageUri = uri
+            cameraLauncher.launch(uri)
+        }
+    }
+
+    LaunchedEffect(key1 = id) {
+        if (id.isBlank()) return@LaunchedEffect
+
+        loading = true
+        error = null
+        bitmap = null
+
+        try {
+            // build multipart text part (same as your ViewModel approach)
+            val req: RequestBody = id.toRequestBody("text/plain".toMediaTypeOrNull())
+
+            // call network on coroutine. Retrofit's suspend functions are main-safe, but body.bytes()
+            // is blocking -> do the decoding on IO
+            val response: Response<ResponseBody> = api.getImageByUuidMultipart(req)
+
+            if (response.isSuccessful) {
+                val body = response.body()
+                if (body != null) {
+                    // decode bytes on IO dispatcher to avoid blocking main thread
+                    val bmp: Bitmap? = withContext(Dispatchers.IO) {
+                        val bytes = body.bytes() // careful: loads into memory
+                        BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                    }
+
+                    if (bmp != null) {
+                        bitmap = bmp
+                    } else {
+                        error = "Failed to decode image"
+                    }
+                } else {
+                    error = "Empty response body"
+                }
+            } else {
+                val errStr = response.errorBody()?.string()
+                error = "Server error: ${response.code()} ${errStr ?: ""}"
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            error = e.message ?: "Unknown error"
+        } finally {
+            loading = false
+        }
+    }
 
     Column(
         Modifier
@@ -101,13 +207,25 @@ fun ProfileScreen(navController: NavController, rollNo: String?, studentName: St
                 .background(Color.Gray),
             contentAlignment = Alignment.Center
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.ic_launcher_foreground), // Using a placeholder
-                contentDescription = "Profile Picture",
-                modifier = Modifier.size(80.dp)
-            )
+            when {
+                loading -> CircularProgressIndicator()
+                bitmap != null -> Image(
+                    bitmap = bitmap!!.asImageBitmap(),
+                    contentDescription = "Profile Picture",
+                    modifier = Modifier.size(120.dp)
+                )
+                else -> Image(
+                    painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                    contentDescription = "Profile placeholder",
+                    modifier = Modifier.size(80.dp)
+                )
+            }
         }
-        TextButton(onClick = { showReEnrollDialog = true }) {
+        TextButton(onClick = {
+
+        showReEnroll = true
+
+        }) {
             Text("Edit")
         }
 
@@ -326,80 +444,140 @@ fun ProfileScreen(navController: NavController, rollNo: String?, studentName: St
         )
     }
 
-    if (showReEnrollDialog) {
-        var selectedUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
-        var isLoadingReenroll by remember { mutableStateOf(false) }
-
-        val galleryLauncher = rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.OpenMultipleDocuments(),
-            onResult = { uris ->
-                if (uris.isNotEmpty()) {
-                    selectedUris = (selectedUris + uris).distinct().take(3)
+    if (showReEnroll) {
+        BackHandler(enabled = true) {
+            showReEnroll = false
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                // draw a faint scrim so user knows it's modal
+                .background(Color.Black.copy(alpha = 0.3f))
+                // intercept taps
+                .pointerInput(Unit) {
+                    detectTapGestures(onTap = { showReEnroll = false })
                 }
-            }
-        )
+        ) {
+            Column (modifier = Modifier
+                .align(Alignment.Center)
+                .clip(RoundedCornerShape(16.dp))
+                .wrapContentSize()
+                .padding(16.dp)
+                .background(Color(0xFF2C2C2C), shape = RoundedCornerShape(16.dp))) {
+                MultiImagePickerContainer(
+                    selectedUris = selectedUris,
+                    onUpload = { galleryLauncher.launch(arrayOf("image/*")) },
+                    onCapture = { captureImage() },
+                    onClear = { uri -> selectedUris = selectedUris - uri }
+                )
+                // Register Button
+                Card(
+                    modifier = Modifier
+                        .height(55.dp)
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .clickable(
+                            enabled = selectedUris.size <= 3 && selectedUris.isNotEmpty() && !isLoading
+                        ) {
+                            coroutineScope.launch {
+                                if (selectedUris.size > 3 || selectedUris.isEmpty()) {
+                                    apiMessage = "Enter enroll no & select 3 images"
+                                    return@launch
+                                }
 
-        AlertDialog(
-            onDismissRequest = { showReEnrollDialog = false },
-            title = { Text("Update Image") },
-            text = {
-                Column {
-                    MultiImagePickerContainer(
-                        selectedUris = selectedUris,
-                        onUpload = { galleryLauncher.launch(arrayOf("image/*")) },
-                        onCapture = { /* TODO: Implement camera capture */ },
-                        onClear = { uri -> selectedUris = selectedUris - uri }
-                    )
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        coroutineScope.launch {
-                            isLoadingReenroll = true
-                            try {
-                                val imageParts = selectedUris.map { uri ->
-                                    val bitmap = MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
-                                    val compressedFile = resizeAndCompress(bitmap, maxSize = 800, quality = 85)
-                                    uriToMultipart(context, compressedFile.toUri(), "images")
+                                isLoading = true
+
+                                try {
+                                    val idPart = id.toRequestBody("text/plain".toMediaTypeOrNull())
+
+                                    val imageParts = selectedUris.map { uri ->
+                                        val bitmap = MediaStore.Images.Media.getBitmap(
+                                            context.contentResolver,
+                                            uri
+                                        )
+                                        val compressedFile =
+                                            resizeAndCompress(bitmap, maxSize = 800, quality = 85)
+                                        uriToMultipart(context, compressedFile.toUri(), "images")
+                                    }
+
+
+                                    val response = api.reenrollStudentEmbeddings(
+                                        images = imageParts,
+                                        studentId = idPart,
+                                        email = currentUserEmail
+                                    )
+
+                                    if (response.isSuccessful) {
+                                        response.body()?.let { body ->
+                                            Toast.makeText(context, "${body.message} | ${body.total_students}", Toast.LENGTH_SHORT).show()
+                                            showReEnroll = false
+                                        }
+                                    } else {
+                                        response.errorBody()?.let { Log.e("ERROR", it.string()) }
+                                        response.errorBody()?.let {
+                                            Toast.makeText(
+                                                context,
+                                                it.string(),
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                    }
+
+                                } catch (e: Exception) {
+                                    apiMessage = "Exception: ${e.localizedMessage}"
+                                } finally {
+                                    isLoading = false
+                                    showReEnroll = false
                                 }
-                                val studentIdPart = id.toRequestBody("text/plain".toMediaTypeOrNull())
-                                val response = api.reenrollStudentEmbeddings(
-                                    images = imageParts,
-                                    studentId = studentIdPart,
-                                    email = currentUserEmail
-                                )
-                                if (response.isSuccessful) {
-                                    Toast.makeText(context, "Re-enrolled successfully", Toast.LENGTH_SHORT).show()
-                                    showReEnrollDialog = false
-                                } else {
-                                    Toast.makeText(context, "Error: ${response.errorBody()?.string()}", Toast.LENGTH_SHORT).show()
-                                }
-                            } catch (e: Exception) {
-                                Toast.makeText(context, "Failed: ${e.message}", Toast.LENGTH_SHORT).show()
-                            } finally {
-                                isLoadingReenroll = false
                             }
+                        },
+                    shape = RoundedCornerShape(25.dp),
+                    elevation = CardDefaults.cardElevation(8.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = when {
+                            isLoading -> Color(0xFF3A3A3A) // dimmed while loading
+                            selectedUris.size <= 3 && selectedUris.isNotEmpty() -> Color(0xFF468A9A) // teal active
+                            else -> Color(0xFF541212) // red inactive
                         }
-                    },
-                    enabled = selectedUris.isNotEmpty() && !isLoadingReenroll
+                    )
                 ) {
-                    if (isLoadingReenroll) {
-                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
-                    } else {
-                        Text("Submit")
+                    Row(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                color = Color.White,
+                                strokeWidth = 2.dp,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                "Registering...",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = Color.White
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.PersonAdd,
+                                contentDescription = "Register",
+                                tint = Color.Black
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                "Register",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = Color.Black
+                            )
+                        }
                     }
                 }
-            },
-            dismissButton = {
-                TextButton(onClick = { showReEnrollDialog = false }) {
-                    Text("Cancel")
-                }
-            },
-//            modifier = Modifier
-//                .fillMaxWidth(1f)   // makes width 90% of screen
-
-
-        )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+        }
     }
+
 }

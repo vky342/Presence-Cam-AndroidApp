@@ -8,6 +8,7 @@ import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -158,12 +159,18 @@ interface ApiService {
 
     // Re-enroll: replace/update embeddings for an existing student (multipart 1..3 images + student_id form field)
     @Multipart
-    @POST("students/re-enroll")
+    @PUT("students/re-enroll")
     suspend fun reenrollStudentEmbeddings(
         @Part images: List<MultipartBody.Part>,
         @Part("student_id") studentId: RequestBody,
         @Header("userEmail") email: String
     ): Response<ReEnrollResponse>
+
+    @Multipart
+    @POST("images/get")
+    suspend fun getImageByUuidMultipart(
+        @Part("uuid") uuidPart: RequestBody
+    ): Response<ResponseBody>
 }
 
 fun uriToMultipart(context: Context, uri: Uri, paramName: String): MultipartBody.Part {
@@ -187,7 +194,7 @@ object RetrofitInstance {
 
     val api: ApiService by lazy {
         Retrofit.Builder()
-            .baseUrl("http://13.204.92.135/api/")
+            .baseUrl("http://43.205.133.68/api/")
             .client(okHttpClient)//
             .addConverterFactory(GsonConverterFactory.create())
             .build()
@@ -197,8 +204,8 @@ object RetrofitInstance {
 
 fun resizeAndCompress(
     bitmap: Bitmap,
-    maxSize: Int = 800, // max width or height in pixels
-    quality: Int = 85   // JPEG quality (0–100)
+    maxSize: Int = 800,
+    quality: Int = 85
 ): File {
     val ratio = bitmap.width.toFloat() / bitmap.height.toFloat()
     val width: Int
