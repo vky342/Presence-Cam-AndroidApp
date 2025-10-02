@@ -48,9 +48,11 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.projectkas.R
 import com.example.projectkas.Screen
 import com.example.projectkas.ViewModel.AuthState
 import com.example.projectkas.ViewModel.AuthViewModel
@@ -112,7 +114,7 @@ fun SignUp(onSignUpSuccess : () -> Unit, onNavigateToLogin : () -> Unit, authVie
             ) {
 
                 Text(
-                    text = "Create Account",
+                    text = stringResource(id = R.string.create_account),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
@@ -124,7 +126,7 @@ fun SignUp(onSignUpSuccess : () -> Unit, onNavigateToLogin : () -> Unit, authVie
                     value = email,
                     onValueChange = { email = it },
                     shape = RoundedCornerShape(25.dp),
-                    label = { Text("Email", color = Color.Gray.copy(alpha = 0.7f)) },
+                    label = { Text(stringResource(id = R.string.email), color = Color.Gray.copy(alpha = 0.7f)) },
                     singleLine = true,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -152,7 +154,7 @@ fun SignUp(onSignUpSuccess : () -> Unit, onNavigateToLogin : () -> Unit, authVie
                     value = password,
                     onValueChange = { password = it },
                     shape = RoundedCornerShape(25.dp),
-                    label = { Text("Password", color = Color.Gray.copy(alpha = 0.7f)) },
+                    label = { Text(stringResource(id = R.string.password), color = Color.Gray.copy(alpha = 0.7f)) },
                     singleLine = true,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -188,7 +190,7 @@ fun SignUp(onSignUpSuccess : () -> Unit, onNavigateToLogin : () -> Unit, authVie
                     value = confirmPassword,
                     onValueChange = { confirmPassword = it },
                     shape = RoundedCornerShape(25.dp),
-                    label = { Text("Confirm Password", color = Color.Gray.copy(alpha = 0.7f)) },
+                    label = { Text(stringResource(id = R.string.confirm_password), color = Color.Gray.copy(alpha = 0.7f)) },
                     singleLine = true,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -223,7 +225,7 @@ fun SignUp(onSignUpSuccess : () -> Unit, onNavigateToLogin : () -> Unit, authVie
                 Button(
                     onClick = {
                         if (password != confirmPassword) {
-                            Toast.makeText(context, "Passwords do not match", Toast.LENGTH_SHORT)
+                            Toast.makeText(context, context.getString(R.string.passwords_do_not_match), Toast.LENGTH_SHORT)
                                 .show()
                         } else {
                             authViewModel.signup(email, password)
@@ -244,7 +246,7 @@ fun SignUp(onSignUpSuccess : () -> Unit, onNavigateToLogin : () -> Unit, authVie
                             color = Color.Black
                         )
                     } else {
-                        Text("Sign Up", color = Color.White)
+                        Text(stringResource(id = R.string.sign_up), color = Color.White)
                     }
                 }
 
@@ -258,7 +260,7 @@ fun SignUp(onSignUpSuccess : () -> Unit, onNavigateToLogin : () -> Unit, authVie
                         .height(50.dp)
                         .padding(horizontal = 8.dp)
                 ) {
-                    Text("Already have an account? Login", color = Color.White)
+                    Text(stringResource(id = R.string.already_have_an_account_login), color = Color.White)
                 }
             }
         }

@@ -32,11 +32,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -45,6 +49,7 @@ import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import coil.compose.rememberAsyncImagePainter
 import com.example.projectkas.Network.RetrofitInstance
 import com.example.projectkas.Network.RetrofitInstance.api
 import com.example.projectkas.Network.resizeAndCompress
@@ -184,7 +189,7 @@ fun ProfileScreen(navController: NavController, rollNo: String?, studentName: St
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            text = "Edit Profile",
+            text = stringResource(id = R.string.edit_profile),
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             color = Color.White,
@@ -226,7 +231,7 @@ fun ProfileScreen(navController: NavController, rollNo: String?, studentName: St
         showReEnroll = true
 
         }) {
-            Text("Edit")
+            Text(stringResource(id = R.string.edit))
         }
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -235,7 +240,7 @@ fun ProfileScreen(navController: NavController, rollNo: String?, studentName: St
         OutlinedTextField(
             value = name,
             onValueChange = { name = it },
-            label = { Text("Name") },
+            label = { Text(stringResource(id = R.string.name)) },
             modifier = Modifier.fillMaxWidth(),
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color(24, 23, 23),
@@ -264,7 +269,7 @@ fun ProfileScreen(navController: NavController, rollNo: String?, studentName: St
         OutlinedTextField(
             value = roll,
             onValueChange = { roll = it },
-            label = { Text("Roll No") },
+            label = { Text(stringResource(id = R.string.roll_no)) },
             modifier = Modifier.fillMaxWidth(),
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color(24, 23, 23),
@@ -345,7 +350,7 @@ fun ProfileScreen(navController: NavController, rollNo: String?, studentName: St
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        "Saving....",
+                        stringResource(id = R.string.saving),
                         style = MaterialTheme.typography.titleMedium,
                         color = Color.White
                     )
@@ -356,7 +361,7 @@ fun ProfileScreen(navController: NavController, rollNo: String?, studentName: St
                         modifier = Modifier.size(ButtonDefaults.IconSize)
                     )
                     Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-                    Text("Save")
+                    Text(stringResource(id = R.string.save))
                 }
 
             }
@@ -382,7 +387,7 @@ fun ProfileScreen(navController: NavController, rollNo: String?, studentName: St
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        "Deleting....",
+                        stringResource(id = R.string.deleting),
                         style = MaterialTheme.typography.titleMedium,
                         color = Color.White
                     )
@@ -393,7 +398,7 @@ fun ProfileScreen(navController: NavController, rollNo: String?, studentName: St
                         modifier = Modifier.size(ButtonDefaults.IconSize)
                     )
                     Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-                    Text("Delete")
+                    Text(stringResource(id = R.string.delete))
                 }
             }
         }
@@ -403,8 +408,8 @@ fun ProfileScreen(navController: NavController, rollNo: String?, studentName: St
         AlertDialog(
             onDismissRequest = { showPickerDialog = false },
 
-            title = { Text("Are you sure?") },
-            text = { Text("Selected Student : $studentName") },
+            title = { Text(stringResource(id = R.string.are_you_sure)) },
+            text = { Text(stringResource(id = R.string.selected_student, studentName ?: "")) },
             confirmButton = {
                 TextButton(onClick = {
                     showPickerDialog = false
@@ -433,13 +438,13 @@ fun ProfileScreen(navController: NavController, rollNo: String?, studentName: St
                         }
                     }
 
-                }) { Text("Delete", color = Color.Red) }
+                }) { Text(stringResource(id = R.string.delete), color = Color.Red) }
             },
 
             dismissButton = {
                 TextButton(onClick = {
                     showPickerDialog = false
-                }) { Text("Cancel" ,color = Color.Green) }
+                }) { Text(stringResource(id = R.string.cancel) ,color = Color.Green) }
             }
         )
     }
@@ -556,7 +561,7 @@ fun ProfileScreen(navController: NavController, rollNo: String?, studentName: St
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                "Registering...",
+                                stringResource(id = R.string.registering),
                                 style = MaterialTheme.typography.titleMedium,
                                 color = Color.White
                             )
@@ -568,7 +573,7 @@ fun ProfileScreen(navController: NavController, rollNo: String?, studentName: St
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                "Register",
+                                stringResource(id = R.string.register),
                                 style = MaterialTheme.typography.titleMedium,
                                 color = Color.Black
                             )
