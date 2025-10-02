@@ -1,7 +1,85 @@
 <resources>
-    <string name="app_name">मेरा ऐप</string>
+    <string name="app_name">प्रोजेक्ट KAS</string>
     <string name="settings_language">भाषा</string>
     <string name="language_english">अंग्रेज़ी</string>
     <string name="language_hindi">हिन्दी</string>
-    <!-- translated strings -->
+
+    <!-- Login Screen -->
+    <string name="login">लॉग इन करें</string>
+    <string name="email">ईमेल</string>
+    <string name="password">पासवर्ड</string>
+    <string name="create_new_account_sign_up">नया खाता बनाएं / साइन अप करें</string>
+    <string name="presence_cam">प्रेजेंस कैम</string>
+
+    <!-- Sign Up Screen -->
+    <string name="create_account">खाता बनाएं</string>
+    <string name="confirm_password">पासवर्ड की पुष्टि करें</string>
+    <string name="passwords_do_not_match">पासवर्ड मेल नहीं खाते</string>
+    <string name="sign_up">साइन अप करें</string>
+    <string name="already_have_an_account_login">पहले से ही एक खाता है? लॉग इन करें</string>
+
+    <!-- Register Screen -->
+    <string name="student_registration">छात्र पंजीकरण</string>
+    <string name="roll_no">रोल नंबर</string>
+    <string name="name">नाम</string>
+    <string name="add_photos">तस्वीरें जोड़े</string>
+    <string name="upload">अपलोड</string>
+    <string name="capture">कैप्चर</string>
+    <string name="register">पंजीकरण करें</string>
+    <string name="note">ध्यान दें</string>
+    <string name="register_note">कृपया अपने चेहरे की एक से तीन स्पष्ट क्लोज-अप तस्वीरें अपलोड करें - आदर्श रूप से एक सामने की ओर और, यदि संभव हो तो, अतिरिक्त साइड व्यू - अच्छी रोशनी में ली गई ताकि आपकी विशेषताएं स्पष्ट रूप से दिखाई दें।</string>
+    <string name="selected_of_3">%1$d / 3 चयनित</string>
+    <string name="enroll_no_and_3_images">रोल नंबर दर्ज करें और कम से कम एक छवि चुनें</string>
+    <string name="total_students_message">कुल छात्र: %1$d</string>
+    <string name="api_error">एपीआई त्रुटि: %1$s</string>
+    <string name="exception">अपवाद: %1$s</string>
+    <string name="remove">हटाएं</string>
+    <string name="add_image">छवि जोड़ें</string>
+    <string name="choose_a_method">एक विधि चुनें</string>
+    <string name="registering">पंजीकरण हो रहा है...</string>
+
+    <!-- Home Screen -->
+    <string name="check_attendance">उपस्थिति जांचें</string>
+    <string name="reset">रीसेट</string>
+    <string name="recognized_students">पहचाने गए छात्र</string>
+    <string name="add">जोड़ें</string>
+    <string name="save">सहेजें</string>
+    <string name="no_faces_recognized">कोई चेहरा नहीं पहचाना गया</string>
+    <string name="add_student">छात्र जोड़ें</string>
+    <string name="cancel">रद्द करें</string>
+    <string name="debug_returned_images">डीबग की गई छवियां</string>
+    <string name="save_images">छवियां सहेजें</string>
+    <string name="all_faces">सभी चेहरे</string>
+    <string name="unrecognized">अज्ञात</string>
+    <string name="processing">संसाधित हो रहा है...</string>
+    <string name="student_roll_no">रोल नंबर: %1$s</string>
+    <string name="student_name">नाम: %1$s</string>
+    <string name="unknown">अज्ञात</string>
+    <string name="student">छात्र</string>
+    <string name="tap_to_upload_or_capture">अपलोड या कैप्चर करने के लिए टैप करें</string>
+    <string name="upload_from_gallery">गैलरी से अपलोड करें</string>
+    <string name="capture_with_camera">कैमरे से कैप्चर करें</string>
+    <string name="selected_image">चयनित छवि</string>
+    <string name="failed_to_load_image">%1$s लोड करने में विफल</string>
+
+    <!-- Settings Screen -->
+    <string name="settings">सेटिंग्स</string>
+    <string name="logged_in_as">इस रूप में लॉग इन हैं</string>
+    <string name="debug_mode">डीबग मोड</string>
+    <string name="search_student">छात्र खोजें...</string>
+    <string name="registered_students">पंजीकृत छात्र</string>
+    <string name="sign_out">साइन आउट</string>
+    <string name="edit">संपादित करें</string>
+    <string name="delete">हटाएं</string>
+    <string name="no_students_registered">कोई छात्र पंजीकृत नहीं है।</string>
+    <string name="are_you_sure">क्या आप निश्चित हैं?</string>
+    <string name="selected_student">चयनित छात्र: %1$s</string>
+    <string name="more_options">और विकल्प</string>
+
+    <!-- Profile Screen -->
+    <string name="edit_profile">प्रोफ़ाइल संपादित करें</string>
+    <string name="saving">सहेज रहा है...</string>
+    <string name="deleting">हटा रहा है...</string>
+
 </resources>
+

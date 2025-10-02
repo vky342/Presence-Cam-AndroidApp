@@ -61,6 +61,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -76,6 +77,7 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.projectkas.Network.RetrofitInstance
 import com.example.projectkas.Network.resizeAndCompress
 import com.example.projectkas.Network.uriToMultipart
+import com.example.projectkas.R
 import com.example.projectkas.ViewModel.AuthViewModel
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -152,7 +154,7 @@ fun Register(navController: NavController, authViewModel: AuthViewModel = hiltVi
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "Student Registration",
+            text = stringResource(id = R.string.student_registration),
             textAlign = TextAlign.Center,
             color = Color.White,
             style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
@@ -170,7 +172,7 @@ fun Register(navController: NavController, authViewModel: AuthViewModel = hiltVi
         OutlinedTextField(
             value = Rollno,
             onValueChange = { Rollno = it },
-            label = { Text("Roll No") },
+            label = { Text(stringResource(id = R.string.roll_no)) },
             textStyle = TextStyle(fontSize = 18.sp, color = Color.White),
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
@@ -200,8 +202,7 @@ fun Register(navController: NavController, authViewModel: AuthViewModel = hiltVi
         OutlinedTextField(
             value = StudentName,
             onValueChange = { StudentName = it },
-            label = { Text("Name") },
-            textStyle = TextStyle(fontSize = 18.sp, color = Color.White),
+            label = { Text(stringResource(id = R.string.name)) },            textStyle = TextStyle(fontSize = 18.sp, color = Color.White),
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
             colors = TextFieldDefaults.colors(
@@ -249,7 +250,7 @@ fun Register(navController: NavController, authViewModel: AuthViewModel = hiltVi
                 ) {
                     coroutineScope.launch {
                         if (Rollno.isBlank() || selectedUris.size > 3 || selectedUris.isEmpty()) {
-                            apiMessage = "Enter enroll no & select 3 images"
+                            apiMessage = context.getString(R.string.enroll_no_and_3_images)
                             return@launch
                         }
 
@@ -276,7 +277,7 @@ fun Register(navController: NavController, authViewModel: AuthViewModel = hiltVi
                             if (response.isSuccessful) {
                                 response.body()?.let { body ->
                                     apiMessage =
-                                        "${body.message} | Total students: ${body.total_students}"
+                                        "${body.message} | ${context.getString(R.string.total_students_message, body.total_students)}"
                                     // Reset form
                                     Rollno = ""
                                     StudentName = ""
@@ -284,11 +285,11 @@ fun Register(navController: NavController, authViewModel: AuthViewModel = hiltVi
                                 }
                             } else {
                                 response.errorBody()?.let { Log.e("ERROR",it.string()) }
-                                apiMessage = "API Error: ${response.errorBody()?.string()}"
+                                apiMessage = context.getString(R.string.api_error, response.errorBody()?.string() ?: "")
                             }
 
                         } catch (e: Exception) {
-                            apiMessage = "Exception: ${e.localizedMessage}"
+                            apiMessage = context.getString(R.string.exception, e.localizedMessage)
                         } finally {
                             isLoading = false
                         }
@@ -319,7 +320,7 @@ fun Register(navController: NavController, authViewModel: AuthViewModel = hiltVi
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        "Registering...",
+                        stringResource(id = R.string.registering),
                         style = MaterialTheme.typography.titleMedium,
                         color = Color.White
                     )
@@ -331,7 +332,7 @@ fun Register(navController: NavController, authViewModel: AuthViewModel = hiltVi
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        "Register",
+                        stringResource(id = R.string.register),
                         style = MaterialTheme.typography.titleMedium,
                         color = Color.Black
                     )
@@ -380,19 +381,19 @@ fun MultiImagePickerContainer(
                     modifier = Modifier.size(48.dp)
                 )
                 Spacer(Modifier.height(8.dp))
-                Text("Add photos", color = Color.Gray)
+                Text(stringResource(id = R.string.add_photos), color = Color.Gray)
 
                 Spacer(Modifier.height(12.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     OutlinedButton(onClick = onUpload) {
                         Icon(Icons.Default.PhotoLibrary, null, tint = Color.White)
                         Spacer(Modifier.width(6.dp))
-                        Text("Upload", color = Color.White)
+                        Text(stringResource(id = R.string.upload), color = Color.White)
                     }
                     OutlinedButton(onClick = onCapture) {
                         Icon(Icons.Default.PhotoCamera, null, tint = Color.White)
                         Spacer(Modifier.width(6.dp))
-                        Text("Capture", color = Color.White)
+                        Text(stringResource(id = R.string.capture), color = Color.White)
                     }
                 }
             }
@@ -423,7 +424,7 @@ fun MultiImagePickerContainer(
                                 .background(Color.Black.copy(alpha = 0.6f), CircleShape)
                                 .size(20.dp)
                         ) {
-                            Icon(Icons.Default.Close, contentDescription = "Remove", tint = Color.White, modifier = Modifier.size(14.dp))
+                            Icon(Icons.Default.Close, contentDescription = stringResource(id = R.string.remove), tint = Color.White, modifier = Modifier.size(14.dp))
                         }
                     }
                 }
@@ -440,7 +441,7 @@ fun MultiImagePickerContainer(
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Icon(Icons.Default.AddAPhoto, contentDescription = "Add", tint = Color.Gray, modifier = Modifier.size(28.dp))
-                            Text("Add", color = Color.Gray, style = MaterialTheme.typography.labelSmall)
+                            Text(stringResource(id = R.string.add), color = Color.Gray, style = MaterialTheme.typography.labelSmall)
                         }
                     }
                 }
@@ -450,7 +451,7 @@ fun MultiImagePickerContainer(
 
             // Progress indicator → e.g. "2/3 selected"
             Text(
-                text = "${selectedUris.size} / 3 selected",
+                text = stringResource(id = R.string.selected_of_3, selectedUris.size),
                 color = Color.White,
                 style = MaterialTheme.typography.bodyMedium
             )
@@ -461,7 +462,7 @@ fun MultiImagePickerContainer(
 
         // Header
         Text(
-            text = "NOTE",
+            text = stringResource(id = R.string.note),
             style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
             color = Color(0xFFDA5555) // themed red
         )
@@ -470,7 +471,7 @@ fun MultiImagePickerContainer(
 
         // Body
         Text(
-            text = "Please upload between one and three clear close-up photos of your face — ideally one front-facing and, if possible, additional side views — taken in good lighting so your features are clearly visible.",
+            text = stringResource(id = R.string.register_note),
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.bodySmall.copy(fontStyle = FontStyle.Italic),
             color = Color(0xFFB0B0B0) // softer gray for readability
@@ -482,20 +483,20 @@ fun MultiImagePickerContainer(
         AlertDialog(
             onDismissRequest = { showPickerDialog = false },
 
-            title = { Text("Add Image") },
-            text = { Text("Choose a method") },
+            title = { Text(stringResource(id = R.string.add_image)) },
+            text = { Text(stringResource(id = R.string.choose_a_method)) },
             confirmButton = {
                 TextButton(onClick = {
                     showPickerDialog = false
                     onCapture()
-                }) { Text("Capture") }
+                }) { Text(stringResource(id = R.string.capture)) }
             },
 
             dismissButton = {
                 TextButton(onClick = {
                     showPickerDialog = false
                     onUpload()
-                }) { Text("Upload") }
+                }) { Text(stringResource(id = R.string.upload)) }
             }
         )
     }

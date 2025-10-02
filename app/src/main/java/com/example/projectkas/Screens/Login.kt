@@ -50,6 +50,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -59,6 +60,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.projectkas.R
 import com.example.projectkas.Screen
 import com.example.projectkas.ViewModel.AuthState
 import com.example.projectkas.ViewModel.AuthViewModel
@@ -118,7 +120,7 @@ fun Login(onLoginSuccess : () -> Unit,onNavigateToSignUp : () -> Unit , authView
             ) {
 
                 Text(
-                    text = "PresenceCam",
+                    text = stringResource(id = R.string.presence_cam),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
@@ -129,7 +131,7 @@ fun Login(onLoginSuccess : () -> Unit,onNavigateToSignUp : () -> Unit , authView
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
-                    label = { Text("Email", color = Color.Gray.copy(alpha = 0.7f)) },
+                    label = { Text(stringResource(id = R.string.email), color = Color.Gray.copy(alpha = 0.7f)) },
                     singleLine = true,
                     shape = RoundedCornerShape(25.dp),
                     modifier = Modifier
@@ -158,7 +160,7 @@ fun Login(onLoginSuccess : () -> Unit,onNavigateToSignUp : () -> Unit , authView
                     value = password,
                     onValueChange = { password = it },
                     shape = RoundedCornerShape(25.dp),
-                    label = { Text("Password", color = Color.Gray.copy(alpha = 0.7f)) },
+                    label = { Text(stringResource(id = R.string.password), color = Color.Gray.copy(alpha = 0.7f)) },
                     singleLine = true,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -208,8 +210,8 @@ fun Login(onLoginSuccess : () -> Unit,onNavigateToSignUp : () -> Unit , authView
                             strokeWidth = 2.dp,
                             color = Color.Black
                         )
-                    } else {
-                        Text("Login", color = Color.White)
+                    }else {
+                        Text(stringResource(id = R.string.login), color = Color.White)
                     }
                 }
 
@@ -224,7 +226,7 @@ fun Login(onLoginSuccess : () -> Unit,onNavigateToSignUp : () -> Unit , authView
                         .padding(horizontal = 8.dp)
                 ) {
                     Text(
-                        "Create new account / Sign Up",
+                        stringResource(id = R.string.create_new_account_sign_up),
                         color = Color.White
                     )
                 }

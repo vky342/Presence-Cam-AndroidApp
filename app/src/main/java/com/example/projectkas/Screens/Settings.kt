@@ -172,7 +172,7 @@ fun Settings(onLogout : () -> Unit,
     ) {
 
         Text(
-            text = "Settings",
+            text = stringResource(id = R.string.settings),
             textAlign = TextAlign.Center,
             color = Color.White,
             style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
@@ -209,7 +209,7 @@ fun Settings(onLogout : () -> Unit,
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
-                    Text("Logged in as", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
+                    Text(stringResource(id = R.string.logged_in_as), color = Color.Gray, style = MaterialTheme.typography.bodySmall)
                     Text(currentUserEmail, color = Color.White, style = MaterialTheme.typography.bodyLarge)
                 }
             }
@@ -231,7 +231,7 @@ fun Settings(onLogout : () -> Unit,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Debug mode",
+                text = stringResource(id = R.string.debug_mode),
                 color = Color.White,
                 style = MaterialTheme.typography.bodyLarge
             )
@@ -274,7 +274,7 @@ fun Settings(onLogout : () -> Unit,
                 ) {
                     Column(Modifier.padding(12.dp)) {
                         Text(
-                            text = "Registered Students",
+                            text = stringResource(id = R.string.registered_students),
                             color = Color.White,
                             style = MaterialTheme.typography.titleMedium,
                             modifier = Modifier.align(Alignment.CenterHorizontally).padding(bottom = 8.dp)
@@ -307,7 +307,7 @@ fun Settings(onLogout : () -> Unit,
                     }
                 }
             } else {
-                Text("No students registered.", color = Color.Gray)
+                Text(stringResource(id = R.string.no_students_registered), color = Color.Gray)
             }
         }
 
@@ -338,7 +338,7 @@ fun Settings(onLogout : () -> Unit,
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    "Sign out",
+                    stringResource(id = R.string.sign_out),
                     style = MaterialTheme.typography.titleMedium,
                     color = Color.White
                 )
@@ -351,8 +351,8 @@ fun Settings(onLogout : () -> Unit,
         AlertDialog(
             onDismissRequest = { showPickerDialog = false },
 
-            title = { Text("Are you sure?") },
-            text = { Text("Selected Student : " + selectedStudent.name) },
+            title = { Text(stringResource(id = R.string.are_you_sure)) },
+            text = { Text(stringResource(id = R.string.selected_student, selectedStudent.name)) },
             confirmButton = {
                 TextButton(enabled = selectedStudent != Student("","","") ,onClick = {
                     showPickerDialog = false
@@ -390,14 +390,14 @@ fun Settings(onLogout : () -> Unit,
                         }
                     }
 
-                }) { Text("Delete", color = Color.Red) }
+                }) { Text(stringResource(id = R.string.delete), color = Color.Red) }
             },
 
             dismissButton = {
                 TextButton(onClick = {
                     showPickerDialog = false
                     selectedStudent = Student("","","")
-                }) { Text("Cancel" ,color = Color.Green) }
+                }) { Text(stringResource(id = R.string.cancel) ,color = Color.Green) }
             }
         )
     }
@@ -431,7 +431,7 @@ fun StudentRow(student: Student, onEdit: () -> Unit, onDelete: () -> Unit) {
             IconButton(onClick = { expanded = true }) {
                 Icon(
                     imageVector = Icons.Default.MoreVert,
-                    contentDescription = "More options",
+                    contentDescription = stringResource(id = R.string.more_options),
                     tint = Color.White
                 )
             }
@@ -440,7 +440,7 @@ fun StudentRow(student: Student, onEdit: () -> Unit, onDelete: () -> Unit) {
                 onDismissRequest = { expanded = false }
             ) {
                 DropdownMenuItem(
-                    text = { Text("Edit") },
+                    text = { Text(stringResource(id = R.string.edit)) },
                     onClick = {
                         onEdit()
                         expanded = false
@@ -448,12 +448,12 @@ fun StudentRow(student: Student, onEdit: () -> Unit, onDelete: () -> Unit) {
                     leadingIcon = {
                         Icon(
                             Icons.Default.Edit,
-                            contentDescription = "Edit"
+                            contentDescription = stringResource(id = R.string.edit)
                         )
                     }
                 )
                 DropdownMenuItem(
-                    text = { Text("Delete") },
+                    text = { Text(stringResource(id = R.string.delete)) },
                     onClick = {
                         onDelete()
                         expanded = false
@@ -461,7 +461,7 @@ fun StudentRow(student: Student, onEdit: () -> Unit, onDelete: () -> Unit) {
                     leadingIcon = {
                         Icon(
                             Icons.Default.Delete,
-                            contentDescription = "Delete"
+                            contentDescription = stringResource(id = R.string.delete)
                         )
                     }
                 )
@@ -478,7 +478,7 @@ fun StudentRow(student: Student, onEdit: () -> Unit, onDelete: () -> Unit) {
 fun SearchBarWithHistory(
     modifier: Modifier = Modifier,
     historyInitial: List<String> = emptyList(),
-    placeholderText: String = "Search student...",
+    placeholderText: String = stringResource(R.string.search_student),
     onSearch: (String) -> Unit = {},
 ) {
     val focusManager = LocalFocusManager.current
@@ -601,7 +601,7 @@ fun SimpleSearchBar(
     query: String,
     onQueryChange: (String) -> Unit,
     modifier: Modifier = Modifier,
-    placeholder: String = "Search student..."
+    placeholder: String = stringResource(R.string.search_student)
 ) {
     val focusManager = LocalFocusManager.current
 

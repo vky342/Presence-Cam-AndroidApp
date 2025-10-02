@@ -8,12 +8,10 @@ import android.graphics.Paint
 import android.graphics.pdf.PdfDocument
 import android.net.Uri
 import android.os.Environment
-import android.util.Base64
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.result.launch
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -54,7 +52,6 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -64,8 +61,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -84,6 +79,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -95,12 +91,12 @@ import com.example.projectkas.Network.RecognizeResponse
 import com.example.projectkas.Network.RecognizedStudent
 import com.example.projectkas.Network.RetrofitInstance
 import com.example.projectkas.Network.uriToMultipart
+import com.example.projectkas.R
 import com.example.projectkas.ViewModel.AttendanceViewModel
 import com.example.projectkas.ViewModel.AuthViewModel
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
-import java.nio.ByteBuffer
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -132,10 +128,8 @@ fun Home(
     val coroutineScope = rememberCoroutineScope()
     var isLoading by remember { mutableStateOf(false) }
 
-    // NEW: holds the URI that the camera should write the full-res photo to
     var latestImageUri by remember { mutableStateOf<Uri?>(null) }
 
-    // Launcher for gallery
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument(),
         onResult = { uri ->
@@ -166,12 +160,11 @@ fun Home(
                     selectedPhotoUris = selectedPhotoUris + uri
                 }
             } else {
-                Toast.makeText(context, "Camera cancelled or failed", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.camera_cancelled_or_failed), Toast.LENGTH_SHORT).show()
             }
         }
     )
 
-    // Launcher to create document
     val createDocumentLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/pdf")
     ) { uri: Uri? ->
@@ -192,36 +185,30 @@ fun Home(
 
                 var y = 60f
                 val startX = 50f
-                val col1X = 50f     // Roll No column start
-                val col2X = 200f    // Name column start
+                val col1X = 50f
+                val col2X = 200f
                 val tableWidth = 500f
                 val rowHeight = 30f
 
-                // Title
                 paint.isFakeBoldText = true
 
-                // Title left
-                canvas.drawText("Attendance List", startX, y, paint)
+                canvas.drawText(context.getString(R.string.attendance_list), startX, y, paint)
 
-                // Date right
                 val dateX = pageInfo.pageWidth - paint.measureText(currentDateTime) - 50f
                 canvas.drawText(currentDateTime, dateX, y, paint)
 
                 y += 40f
 
-                // Header row
                 paint.textSize = 14f
-                canvas.drawText("Roll No", col1X, y, paint)
-                canvas.drawText("Name", col2X, y, paint)
+                canvas.drawText(context.getString(R.string.roll_no), col1X, y, paint)
+                canvas.drawText(context.getString(R.string.name), col2X, y, paint)
 
-                // Horizontal line under header
                 canvas.drawLine(col1X, y + 5f, col1X + tableWidth, y + 5f, paint)
                 y += rowHeight
 
-                // Data rows
                 recognizedList.sortedBy { it.roll_no }.forEach { student ->
                     canvas.drawText(student.roll_no, col1X, y, normalPaint)
-                    canvas.drawText(student.name ?: "Unknown", col2X, y, normalPaint)
+                    canvas.drawText(student.name ?: context.getString(R.string.unknown), col2X, y, normalPaint)
                     y += rowHeight
                 }
 
@@ -232,9 +219,9 @@ fun Home(
                 }
 
                 pdfDocument.close()
-                Toast.makeText(context, "PDF saved successfully!", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, context.getString(R.string.pdf_saved_successfully), Toast.LENGTH_LONG).show()
             } catch (e: Exception) {
-                Toast.makeText(context, "Failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.failed_with_error, e.message), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -252,7 +239,7 @@ fun Home(
     ) {
 
         Text(
-            text = "Presence Cam",
+            text = stringResource(id = R.string.presence_cam),
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center,
             color = Color.White,
@@ -262,7 +249,7 @@ fun Home(
         Spacer(modifier = Modifier.height(4.dp))
 
         Divider(
-            color = Color(0xFF468A9A), // teal accent
+            color = Color(0xFF468A9A),
             thickness = 2.dp,
             modifier = Modifier
                 .width(180.dp)
@@ -285,9 +272,7 @@ fun Home(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // Send / Reset
         if (isLoading) {
-            // Show loading card instead of ActionCard
             Card(
                 modifier = Modifier
                     .height(55.dp)
@@ -295,7 +280,7 @@ fun Home(
                     .padding(horizontal = 16.dp),
                 shape = RoundedCornerShape(25.dp),
                 elevation = CardDefaults.cardElevation(8.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF3A3A3A)) // dimmed while loading
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF3A3A3A))
             ) {
                 Row(
                     modifier = Modifier
@@ -311,19 +296,18 @@ fun Home(
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(
-                        "Processing...",
+                        stringResource(id = R.string.processing),
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White
                     )
                 }
             }
         } else {
-            // Use ActionCard normally
             ActionCard(
-                text = if (recognizedList.isEmpty() && apiResponse == null) "Check Attendance" else "Reset",
+                text = if (recognizedList.isEmpty() && apiResponse == null) stringResource(id = R.string.check_attendance) else stringResource(id = R.string.reset),
                 icon = if (recognizedList.isEmpty() && apiResponse == null) Icons.Default.FactCheck else Icons.Default.Refresh,
                 color = if (recognizedList.isEmpty() && apiResponse == null) Color(0xFF468A9A) else Color(0xFF541212),
-                enabled = selectedPhotoUris != null
+                enabled = selectedPhotoUris.isNotEmpty()
             ) {
                 if (apiResponse == null && recognizedList.isEmpty()) {
                     coroutineScope.launch {
@@ -331,7 +315,7 @@ fun Home(
                         try {
                             selectedPhotoUris.let { uris ->
                                 val imageParts = uris.map { uri ->
-                                    uriToMultipart(context, uri, "files")  // 👈 use "files" for each
+                                    uriToMultipart(context, uri, "files")
                                 }
 
                                 val response = if (debugMode) {
@@ -356,16 +340,16 @@ fun Home(
                                         val msg = res.message()
                                         val err = try { res.errorBody()?.string() } catch (_: Exception) { null }
                                         Log.e("API", "Unsuccessful: code=$code, message=$msg, error=$err")
-                                        Toast.makeText(context, "API Error ($code)", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, context.getString(R.string.api_error, code), Toast.LENGTH_SHORT).show()
                                     }
                                 } ?: run {
-                                    Toast.makeText(context, "Null response from server", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, context.getString(R.string.null_response_from_server), Toast.LENGTH_SHORT).show()
                                 }
 
                             }
                         } catch (e: Exception) {
                             Log.e("DEBUG","Exception: ${e.message}")
-                            Toast.makeText(context, "Exception: ${e.message}", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.exception, e.message), Toast.LENGTH_SHORT).show()
                         } finally {
                             isLoading = false
                         }
@@ -380,7 +364,6 @@ fun Home(
 
         Spacer(Modifier.height(30.dp))
 
-        // Attendance table
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -390,9 +373,8 @@ fun Home(
             colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C2C))
         ) {
             Column(Modifier.padding(vertical = 12.dp, horizontal = 12.dp)) {
-                // Header
                 Text(
-                    "Recognized Students",
+                    stringResource(id = R.string.recognized_students),
                     modifier = Modifier.padding(horizontal = 5.dp),
                     color = Color.White,
                     style = MaterialTheme.typography.titleMedium
@@ -400,32 +382,30 @@ fun Home(
 
                 Spacer(Modifier.height(8.dp))
 
-                // Table
                 AttendanceTable(
                     recognizedList,
                     onDelete = { attendanceViewModel.removeStudent(it) },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(400.dp) // compact height
+                        .heightIn(400.dp)
                 )
 
                 Spacer(Modifier.height(8.dp))
 
-                // Integrated action row (smaller buttons)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     SmallActionCard(
-                        text = "Add",
+                        text = stringResource(id = R.string.add),
                         icon = Icons.Default.PersonAdd,
                         color = Color(0xFF468A9A),
                         modifier = Modifier.weight(1f)
                     ) { showAddDialog = true }
 
                     SmallActionCard(
-                        text = "Save",
+                        text = stringResource(id = R.string.save),
                         icon = Icons.Default.PictureAsPdf,
                         color = Color(0xFF8A9A46),
                         modifier = Modifier.weight(1f)
@@ -447,46 +427,41 @@ fun Home(
             ) {
                 Column(Modifier.padding(12.dp)) {
                     Text(
-                        "Debug Returned Images",
+                        stringResource(id = R.string.debug_returned_images), // Assumes this string exists
                         color = Color.White,
                         style = MaterialTheme.typography.titleMedium
                     )
 
                     Spacer(Modifier.height(8.dp))
 
-                    // Column instead of Row
                     Column(
                         verticalArrangement = Arrangement.spacedBy(16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         apiResponse?.annotated_all?.let { base64 ->
-                            DebugImageCard("All Faces", base64)
+                            DebugImageCard(stringResource(id = R.string.all_faces), base64) // Assumes this string exists
                         }
                         apiResponse?.annotated_unrecognized?.let { base64 ->
-                            DebugImageCard("Unrecognized", base64)
+                            DebugImageCard(stringResource(id = R.string.unrecognized), base64) // Assumes this string exists
                         }
                     }
 
                     Spacer(Modifier.height(16.dp))
 
-                    // Save button
                     SmallActionCard(
-                        text = "Save Images",
+                        text = stringResource(id = R.string.save_images),
                         icon = Icons.Default.Save,
                         color = Color(0xFF468A9A),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        // Save both if available
                         apiResponse?.annotated_all?.let { saveBase64Image(context, it, "annotated_all.jpg") }
                         apiResponse?.annotated_unrecognized?.let { saveBase64Image(context, it, "annotated_unrecognized.jpg") }
-                        Toast.makeText(context, "Images saved to storage", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.images_saved_to_storage), Toast.LENGTH_SHORT).show()
                     }
                 }
             }
         }
-
-
     }
 
     if (showAddDialog) {
@@ -495,13 +470,13 @@ fun Home(
 
         AlertDialog(
             onDismissRequest = { showAddDialog = false },
-            title = { Text("Add Student", color = Color.White) },
+            title = { Text(stringResource(id = R.string.add_student), color = Color.White) }, // Assumes this string exists
             text = {
                 Column {
                     OutlinedTextField(
                         value = enrollInput,
                         onValueChange = { enrollInput = it },
-                        label = { Text("Roll No") },
+                        label = { Text(stringResource(id = R.string.roll_no)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -509,7 +484,7 @@ fun Home(
                     OutlinedTextField(
                         value = nameInput,
                         onValueChange = { nameInput = it },
-                        label = { Text("Name") },
+                        label = { Text(stringResource(id = R.string.name)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -517,13 +492,12 @@ fun Home(
             },
             confirmButton = {
                 SmallActionCard(
-                    text = "Add",
+                    text = stringResource(id = R.string.add),
                     icon = Icons.Default.Check,
                     color = Color(0xFF468A9A),
-                    modifier = Modifier.width(100.dp) // compact
+                    modifier = Modifier.width(100.dp)
                 ) {
                     if (enrollInput.isNotBlank() && nameInput.isNotBlank()) {
-                        // ✅ Add to recognized students
                         attendanceViewModel.addStudent(
                             RecognizedStudent(roll_no = enrollInput, name = nameInput)
                         )
@@ -533,7 +507,7 @@ fun Home(
             },
             dismissButton = {
                 SmallActionCard (
-                    text = "Cancel",
+                    text = stringResource(id = R.string.cancel), // Assumes this string exists
                     icon = Icons.Default.Close,
                     color = Color(0xFF541212),
                     modifier = Modifier.width(100.dp)
@@ -544,15 +518,13 @@ fun Home(
             containerColor = Color(0xFF2C2C2C)
         )
     }
-
-
 }
 
 @Composable
 fun AttendanceTable(
     recognizedList: List<RecognizedStudent>,
     modifier: Modifier = Modifier,
-    onDelete: (RecognizedStudent) -> Unit // 👈 callback
+    onDelete: (RecognizedStudent) -> Unit
 ) {
     Column(
         modifier = modifier
@@ -560,17 +532,16 @@ fun AttendanceTable(
             .padding(horizontal = 5.dp)
     ) {
         if (recognizedList.isEmpty()) {
-            // Empty state
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFF3A3A3A) // 👈 lighter grey than background
+                    containerColor = Color(0xFF3A3A3A)
                 ),
                 elevation = CardDefaults.cardElevation(4.dp)
             ) {
                 Text(
-                    text = "No faces recognized",
+                    text = stringResource(id = R.string.no_faces_recognized),
                     color = Color.Gray,
                     modifier = Modifier.padding(16.dp),
                     textAlign = TextAlign.Center,
@@ -578,7 +549,6 @@ fun AttendanceTable(
                 )
             }
         } else {
-            // Student list
             recognizedList.sortedBy { it.roll_no }.forEach { student ->
                 Card(
                     modifier = Modifier
@@ -595,20 +565,18 @@ fun AttendanceTable(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-
-                        // Delete button as left end cap
                         Box(
                             modifier = Modifier
                                 .height(40.dp)
-                                .clip(RoundedCornerShape(topStart = 12.dp, bottomStart = 12.dp)) // 👈 rounded only left side
-                                .background(Color(0xFFE57373)) // softer red
+                                .clip(RoundedCornerShape(topStart = 12.dp, bottomStart = 12.dp))
+                                .background(Color(0xFFE57373))
                                 .clickable { onDelete(student) }
                                 .padding(horizontal = 12.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Delete,
-                                contentDescription = "Delete",
+                                contentDescription = stringResource(id = R.string.delete),
                                 tint = Color.White,
                                 modifier = Modifier.size(20.dp)
                             )
@@ -618,35 +586,29 @@ fun AttendanceTable(
 
                         Column(Modifier.weight(1f)) {
                             Text(
-                                text = "Roll No: ${student.roll_no}",
+                                text = stringResource(id = R.string.student_roll_no, student.roll_no),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Color.White
                             )
                             Text(
-                                text = "Name: ${student.name ?: "Unknown"}",
+                                text = stringResource(id = R.string.student_name, student.name ?: stringResource(id = R.string.unknown)),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Color.White
                             )
                         }
 
-                        // Profile icon
                         Icon(
                             imageVector = Icons.Default.AccountCircle,
-                            contentDescription = "Student",
+                            contentDescription = stringResource(id = R.string.student),
                             tint = Color.White,
                             modifier = Modifier.size(28.dp)
                         )
-
-
                     }
                 }
             }
         }
     }
 }
-
-
-
 
 @Composable
 fun ActionCard(
@@ -660,6 +622,7 @@ fun ActionCard(
     Card(
         modifier = modifier
             .height(55.dp)
+            .fillMaxWidth() // Added to ensure it fills width
             .clickable(enabled = enabled, onClick = onClick),
         shape = RoundedCornerShape(25.dp),
         elevation = CardDefaults.cardElevation(8.dp),
@@ -687,13 +650,12 @@ fun ImagePickerContainer(
     onRemove: (Uri) -> Unit
 ) {
     var showAddMenu by remember { mutableStateOf(false) }
-    val listState = rememberLazyListState() // 👈 to check scroll
+    val listState = rememberLazyListState()
 
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
         if (selectedPhotoUris.isEmpty()) {
-            // Empty placeholder
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -711,31 +673,29 @@ fun ImagePickerContainer(
                         modifier = Modifier.size(48.dp)
                     )
                     Spacer(Modifier.height(8.dp))
-                    Text("Tap to upload or capture", color = Color.Gray)
+                    Text(stringResource(id = R.string.tap_to_upload_or_capture), color = Color.Gray)
                     Spacer(Modifier.height(12.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         OutlinedButton(onClick = onAddUpload) {
                             Icon(Icons.Default.PhotoLibrary, null, tint = Color.White)
                             Spacer(Modifier.width(6.dp))
-                            Text("Upload", color = Color.White)
+                            Text(stringResource(id = R.string.upload), color = Color.White)
                         }
                         OutlinedButton(onClick = onAddCapture) {
                             Icon(Icons.Default.PhotoCamera, null, tint = Color.White)
                             Spacer(Modifier.width(6.dp))
-                            Text("Capture", color = Color.White)
+                            Text(stringResource(id = R.string.capture), color = Color.White)
                         }
                     }
                 }
             }
         } else {
-            // Scrollable thumbnail strip with fade indicator
             Box(modifier = Modifier.height(90.dp)) {
                 LazyRow(
                     state = listState,
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    // Add more button
                     item {
                         Box(
                             modifier = Modifier
@@ -746,7 +706,7 @@ fun ImagePickerContainer(
                                 .clickable { showAddMenu = true },
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(Icons.Default.Add, contentDescription = "Add", tint = Color.White)
+                            Icon(Icons.Default.Add, contentDescription = stringResource(id = R.string.add), tint = Color.White)
                         }
 
                         if (showAddMenu) {
@@ -754,51 +714,53 @@ fun ImagePickerContainer(
                                 onDismissRequest = { showAddMenu = false },
                                 title = {
                                     Text(
-                                        "Add Image",
+                                        stringResource(id = R.string.add_image),
                                         style = MaterialTheme.typography.titleMedium,
                                         color = Color.White
                                     )
                                 },
                                 text = {
                                     Column(
-                                        modifier = Modifier.fillMaxWidth().height(80.dp),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(80.dp),
                                         verticalArrangement = Arrangement.spacedBy(16.dp),
                                         horizontalAlignment = Alignment.CenterHorizontally
                                     ) {
-
                                         SmallActionCard(
-                                            text = "Upload from Gallery",
+                                            text = stringResource(id = R.string.upload_from_gallery),
                                             icon = Icons.Default.UploadFile,
                                             color = Color(0xFF468A9A),
-                                            modifier = Modifier.weight(1f) // compact
+                                            modifier = Modifier.fillMaxWidth()
                                         ) {
                                             showAddMenu = false
                                             onAddUpload()
                                         }
 
                                         SmallActionCard(
-                                            text = "Capture with Camera",
+                                            text = stringResource(id = R.string.capture_with_camera),
                                             icon = Icons.Default.PhotoCamera,
                                             color = Color(0xFF8A9A46),
-                                            modifier = Modifier.weight(1f)
-                                        ) { showAddMenu = false
-                                            onAddCapture() }
-
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            showAddMenu = false
+                                            onAddCapture()
+                                        }
                                     }
                                 },
                                 confirmButton = {},
+                                dismissButton = {},
                                 containerColor = Color(0xFF2C2C2C),
                                 shape = RoundedCornerShape(16.dp)
                             )
                         }
                     }
 
-                    // Selected images
                     items(selectedPhotoUris) { uri ->
                         Box {
                             Image(
                                 painter = rememberAsyncImagePainter(uri),
-                                contentDescription = "Selected image",
+                                contentDescription = stringResource(id = R.string.selected_image),
                                 modifier = Modifier
                                     .aspectRatio(1f)
                                     .fillMaxHeight()
@@ -811,13 +773,12 @@ fun ImagePickerContainer(
                                     .align(Alignment.TopEnd)
                                     .background(Color.Black.copy(alpha = 0.6f), CircleShape)
                             ) {
-                                Icon(Icons.Default.Close, contentDescription = "Remove", tint = Color.White)
+                                Icon(Icons.Default.Close, contentDescription = stringResource(id = R.string.remove), tint = Color.White)
                             }
                         }
                     }
                 }
 
-                // Fade indicator on right edge if scrollable
                 val showFade = listState.layoutInfo.totalItemsCount > 0 &&
                         (listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
                             ?: 0) < listState.layoutInfo.totalItemsCount - 1
@@ -840,8 +801,6 @@ fun ImagePickerContainer(
     }
 }
 
-
-
 @Composable
 fun SmallActionCard(
     text: String,
@@ -852,7 +811,7 @@ fun SmallActionCard(
 ) {
     Card(
         modifier = modifier
-            .height(40.dp) // smaller height than before
+            .height(40.dp)
             .clickable { onClick() },
         shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(4.dp),
@@ -869,13 +828,13 @@ fun SmallActionCard(
                 imageVector = icon,
                 contentDescription = text,
                 tint = Color.Black,
-                modifier = Modifier.size(16.dp) // smaller icon
+                modifier = Modifier.size(16.dp)
             )
             Spacer(Modifier.width(6.dp))
             Text(
                 text,
                 color = Color.Black,
-                style = MaterialTheme.typography.bodyMedium // smaller text
+                style = MaterialTheme.typography.bodyMedium
             )
         }
     }
@@ -884,7 +843,7 @@ fun SmallActionCard(
 @Composable
 fun DebugImageCard(label: String, base64: String) {
     val bitmap = remember(base64) {
-        decodeBase64Scaled(base64, 800, 800) // scale down to max 800x800
+        decodeBase64Scaled(base64, 800, 800)
     }
 
     if (bitmap != null) {
@@ -901,11 +860,9 @@ fun DebugImageCard(label: String, base64: String) {
             Text(label, color = Color.White, style = MaterialTheme.typography.bodySmall)
         }
     } else {
-        Text("Failed to load $label", color = Color.Red)
+        Text(stringResource(id = R.string.failed_to_load_image, label), color = Color.Red)
     }
 }
-
-
 
 fun saveBase64Image(context: Context, base64: String, fileName: String) {
     try {
@@ -918,22 +875,25 @@ fun saveBase64Image(context: Context, base64: String, fileName: String) {
         }
     } catch (e: Exception) {
         e.printStackTrace()
-        Toast.makeText(context, "Failed to save $fileName", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, context.getString(R.string.failed_to_save_file, fileName), Toast.LENGTH_SHORT).show()
     }
 }
 
 fun decodeBase64Scaled(base64: String, reqWidth: Int, reqHeight: Int): Bitmap? {
-    val imageBytes = android.util.Base64.decode(base64, android.util.Base64.DEFAULT)
+    return try {
+        val imageBytes = android.util.Base64.decode(base64, android.util.Base64.DEFAULT)
 
-    // First decode with inJustDecodeBounds=true to check dimensions
-    val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-    BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size, options)
+        val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size, options)
 
-    // Calculate scale factor
-    options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight)
-    options.inJustDecodeBounds = false
+        options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight)
+        options.inJustDecodeBounds = false
 
-    return BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size, options)
+        BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size, options)
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
 }
 
 fun calculateInSampleSize(options: BitmapFactory.Options, reqWidth: Int, reqHeight: Int): Int {
@@ -950,16 +910,4 @@ fun calculateInSampleSize(options: BitmapFactory.Options, reqWidth: Int, reqHeig
     }
     return inSampleSize
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
