@@ -42,6 +42,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
@@ -215,7 +216,7 @@ fun Settings(onLogout : () -> Unit,
             }
         }
 
-        LanguageRow(
+        LanguageDropdown (
             currentLangFromVm = currentLang,
             onSetLanguage = { code -> viewModel.setLanguage(code) },
             onLocaleApplied = onLocaleApplied
@@ -261,7 +262,7 @@ fun Settings(onLogout : () -> Unit,
         if (isLoading) {
             CircularProgressIndicator(color = Color.White)
         } else if (errorMessage != null) {
-            Text(errorMessage ?: "", color = Color.Red)
+            Text("Server Error - unable to connect", color = Color.Red)
         } else {
             if (filteredStudents.isNotEmpty()) {
                 Card(
@@ -649,19 +650,29 @@ fun SimpleSearchBar(
     )
 }
 
+
 @Composable
-fun LanguageRow(
-    currentLangFromVm: String?,               // observed from your ViewModel (StateFlow / LiveData)
-    onSetLanguage: (String) -> Unit,          // calls viewModel.setLanguage(...)
+fun LanguageDropdown(
+    currentLangFromVm: String?,              // observed from your ViewModel (StateFlow / LiveData)
+    onSetLanguage: (String) -> Unit,         // calls viewModel.setLanguage(...)
     onLocaleApplied: (String) -> Unit
 ) {
     val initial = currentLangFromVm ?: Locale.getDefault().language
     var selected by rememberSaveable { mutableStateOf(initial) }
+    var expanded by remember { mutableStateOf(false) }
 
-    // If ViewModel updates (e.g. after process restart), keep local state in sync:
+    // Sync local state with ViewModel updates
     LaunchedEffect(currentLangFromVm) {
         currentLangFromVm?.let { selected = it }
     }
+
+    val languages = listOf(
+        "en" to stringResource(R.string.language_english),
+        "hi" to stringResource(R.string.language_hindi)
+    )
+
+    val selectedLabel = languages.find { it.first == selected }?.second
+        ?: stringResource(R.string.language_english)
 
     Column(
         modifier = Modifier
@@ -676,54 +687,31 @@ fun LanguageRow(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        val languages = listOf(
-            "en" to stringResource(R.string.language_english),
-            "hi" to stringResource(R.string.language_hindi)
-        )
+        Box {
+            // Main dropdown trigger
+            OutlinedButton(
+                onClick = { expanded = true },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(text = selectedLabel)
+            }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            languages.forEach { (code, label) ->
-                // Single clickable target (the whole pill)
-                val isSelected = selected == code
-                Row(
-                    modifier = Modifier
-                        .clip(MaterialTheme.shapes.small)
-                        .clickable(
-                            // single handler; no duplicate clicks
-                            onClick = {
-                                // Update UI immediately
-                                selected = code
-
-                                // Persist and apply locale
-                                onSetLanguage(code)
-                                onLocaleApplied(code)
-                            },
-                            role = Role.RadioButton
-                        )
-                        .padding(horizontal = 8.dp, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Make RadioButton non-interactive to avoid double-handling:
-                    RadioButton(
-                        selected = isSelected,
-                        onClick = null, // handled by parent Row
-                        modifier = Modifier.size(20.dp),
-                        colors = RadioButtonDefaults.colors(
-                            selectedColor = MaterialTheme.colorScheme.primary,
-                            unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    )
-
-                    Spacer(modifier = Modifier.width(4.dp))
-
-                    Text(
-                        text = label,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface
+            // Actual dropdown content
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+                modifier = Modifier
+                    .background(MaterialTheme.colorScheme.surface)
+            ) {
+                languages.forEach { (code, label) ->
+                    DropdownMenuItem(
+                        text = { Text(label) },
+                        onClick = {
+                            expanded = false
+                            selected = code
+                            onSetLanguage(code)
+                            onLocaleApplied(code)
+                        }
                     )
                 }
             }
