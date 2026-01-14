@@ -246,10 +246,10 @@ fun Register(navController: NavController, authViewModel: AuthViewModel = hiltVi
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
                 .clickable(
-                    enabled = selectedUris.size <= 3 && Rollno.isNotBlank() && !isLoading
+                    enabled = selectedUris.isNotEmpty() && Rollno.isNotBlank() && StudentName.isNotBlank() && !isLoading
                 ) {
                     coroutineScope.launch {
-                        if (Rollno.isBlank() || selectedUris.size > 3 || selectedUris.isEmpty()) {
+                        if (Rollno.isBlank() || selectedUris.size > 3 || selectedUris.isEmpty() || StudentName.isBlank()) {
                             apiMessage = context.getString(R.string.enroll_no_and_3_images)
                             return@launch
                         }
@@ -300,7 +300,7 @@ fun Register(navController: NavController, authViewModel: AuthViewModel = hiltVi
             colors = CardDefaults.cardColors(
                 containerColor = when {
                     isLoading -> Color(0xFF3A3A3A) // dimmed while loading
-                    selectedUris.size == 3 && Rollno.isNotBlank() -> Color(0xFF468A9A) // teal active
+                    selectedUris.isNotEmpty() && Rollno.isNotBlank() && StudentName.isNotBlank() -> Color(0xFF468A9A) // teal active
                     else -> Color(0xFF541212) // red inactive
                 }
             )

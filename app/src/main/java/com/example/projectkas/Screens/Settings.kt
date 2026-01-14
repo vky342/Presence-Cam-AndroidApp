@@ -20,9 +20,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Clear
@@ -168,7 +170,8 @@ fun Settings(onLogout : () -> Unit,
         Modifier
             .fillMaxSize()
             .background(color = Color(24, 23, 23))
-            .padding(top = 4.dp, start = 16.dp, end = 16.dp, bottom = 4.dp),
+            .padding(top = 4.dp, start = 16.dp, end = 16.dp, bottom = 4.dp)
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
 
@@ -199,13 +202,13 @@ fun Settings(onLogout : () -> Unit,
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(horizontal = 16.dp, vertical = 5.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
                     imageVector = Icons.Default.AccountCircle,
                     contentDescription = "Profile",
-                    modifier = Modifier.size(48.dp),
+                    modifier = Modifier.size(40.dp),
                     tint = Color.White
                 )
                 Spacer(modifier = Modifier.width(12.dp))
@@ -262,20 +265,21 @@ fun Settings(onLogout : () -> Unit,
         if (isLoading) {
             CircularProgressIndicator(color = Color.White)
         } else if (errorMessage != null) {
+            Log.e("ERROR", "" + errorMessage)
             Text("Server Error - unable to connect", color = Color.Red)
         } else {
             if (filteredStudents.isNotEmpty()) {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f),
+                        .height(400.dp),
                     shape = RoundedCornerShape(12.dp),
                     elevation = CardDefaults.cardElevation(4.dp),
                     colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C2C))
                 ) {
                     Column(Modifier.padding(12.dp)) {
                         Text(
-                            text = stringResource(id = R.string.registered_students),
+                            text = stringResource(id = R.string.registered_students) + " - " + filteredStudents.size,
                             color = Color.White,
                             style = MaterialTheme.typography.titleMedium,
                             modifier = Modifier.align(Alignment.CenterHorizontally).padding(bottom = 8.dp)
@@ -317,7 +321,7 @@ fun Settings(onLogout : () -> Unit,
 
         Card(
             modifier = Modifier
-                .height(55.dp)
+                .height(45.dp)
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
                 .clickable { authViewModel.signout() },
@@ -677,7 +681,7 @@ fun LanguageDropdown(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 16.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
         Text(
             text = stringResource(R.string.settings_language),
