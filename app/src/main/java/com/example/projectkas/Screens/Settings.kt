@@ -46,8 +46,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -67,12 +65,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -85,6 +81,7 @@ import com.example.projectkas.ViewModel.AuthState
 import com.example.projectkas.ViewModel.AuthViewModel
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.projectkas.Network.ClassUi
 import com.example.projectkas.Network.RetrofitInstance.api
 import com.example.projectkas.R
 import com.example.projectkas.ViewModel.SettingsViewModel
@@ -106,65 +103,76 @@ fun Settings(onLogout : () -> Unit,
 
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
-    var isLoadingDelete by remember { mutableStateOf(false) }
 
     val currentLang by viewModel.currentLang.collectAsState()
     val ctx = LocalContext.current
 
     // State for API call
     var query by rememberSaveable { mutableStateOf("") }
-    var students by remember { mutableStateOf<List<Student>>(emptyList()) }
-    val filteredStudents by remember {
+    var classes by remember { mutableStateOf<List<ClassUi>>(emptyList()) }
+
+    var selectedClass by remember { mutableStateOf<ClassUi?>(null) }
+
+    var showEditClassDialog by remember { mutableStateOf(false) }
+    var showDeleteClassDialog by remember { mutableStateOf(false) }
+
+    var editedClassName by remember { mutableStateOf("") }
+
+    var apiMessage by remember { mutableStateOf<String?>(null) }
+    apiMessage?.let { msg ->
+        LaunchedEffect(msg) {
+            Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+            apiMessage = null // reset after showing
+        }
+    }
+
+
+
+    val filteredClasses by remember {
         derivedStateOf {
             val q = query.trim()
-            if (q.isEmpty()) students.toList()
-            else students.filter { st ->
-                st.roll_no.contains(q, true) ||
-                        st.name.contains(q, true)
+            if (q.isEmpty()) classes.toList()
+            else classes.filter { cls ->
+                cls.name.contains(q, true) ||
+                        cls.id.contains(q, true)
             }
         }
     }
+
+
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val debugMode by authViewModel.debugMode.collectAsState()
 
     var showPickerDialog by remember { mutableStateOf(false) }
-    var selectedStudent: Student by remember { mutableStateOf(Student("","","")) }
 
-
-
-
-
-    // Fetch students when authenticated
+    // Fetch classes when authenticated
     LaunchedEffect(authState.value) {
         when (authState.value) {
             is AuthState.Unauthenticated -> onLogout()
+
             is AuthState.Authenticated -> {
-
-//                students = listOf(
-//                    Student(id = "1", roll_no = "101", name = "John Doe"),
-//                    Student(id = "2", roll_no = "102", name = "Jane Smith"),
-//                    Student(id = "3", roll_no = "103", name = "Peter Jones")
-//                )
-
                 isLoading = true
                 try {
-                    val response = RetrofitInstance.api.listStudents(currentUserEmail)
-                    if (response.isSuccessful) {
-                        students = response.body()?.students ?: emptyList()
-                        Log.d("debug","" + students.toString())
-                    } else {
-                        errorMessage = "Error: ${response.errorBody()?.string()}"
-                    }
+                    val response = RetrofitInstance.api.getClasses(
+                        userEmail = currentUserEmail
+                    )
+
+                    // getClasses() returns ClassesResponse directly
+                    classes = response.classes
+                    Log.d("debug", "Classes: $classes")
+
                 } catch (e: Exception) {
                     errorMessage = "Exception: ${e.localizedMessage}"
                 } finally {
                     isLoading = false
                 }
             }
+
             else -> Unit
         }
     }
+
 
     Column(
         Modifier
@@ -261,14 +269,14 @@ fun Settings(onLogout : () -> Unit,
 
         Spacer(modifier = Modifier.height(18.dp))
 
-        // Student table
+        // Classes table
         if (isLoading) {
             CircularProgressIndicator(color = Color.White)
         } else if (errorMessage != null) {
             Log.e("ERROR", "" + errorMessage)
             Text("Server Error - unable to connect", color = Color.Red)
         } else {
-            if (filteredStudents.isNotEmpty()) {
+            if (filteredClasses.isNotEmpty()) {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -279,10 +287,12 @@ fun Settings(onLogout : () -> Unit,
                 ) {
                     Column(Modifier.padding(12.dp)) {
                         Text(
-                            text = stringResource(id = R.string.registered_students) + " - " + filteredStudents.size,
+                            text = "Classes - ${filteredClasses.size}",
                             color = Color.White,
                             style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.align(Alignment.CenterHorizontally).padding(bottom = 8.dp)
+                            modifier = Modifier
+                                .align(Alignment.CenterHorizontally)
+                                .padding(bottom = 8.dp)
                         )
                         Divider(
                             color = Color.Gray,
@@ -292,15 +302,20 @@ fun Settings(onLogout : () -> Unit,
                         LazyColumn(
                             modifier = Modifier.fillMaxSize()
                         ) {
-                            items(filteredStudents) { student ->
-                                StudentRow(
-                                    student = student,
+                            items(filteredClasses) { cls ->
+                                ClassRow(
+                                    classItem = cls,
                                     onEdit = {
-                                        navController.navigate("${Screen.Profile.route}/${student.roll_no}/${student.name}/${student.id}")
+                                        selectedClass = cls
+                                        editedClassName = cls.name
+                                        showEditClassDialog = true
                                     },
                                     onDelete = {
-                                        showPickerDialog = true
-                                        selectedStudent = student
+                                        selectedClass = cls
+                                        showDeleteClassDialog = true
+                                    },
+                                    onStudent = {
+                                        navController.navigate("${Screen.Student.route}/${cls.id}")
                                     }
                                 )
                                 Divider(
@@ -309,10 +324,11 @@ fun Settings(onLogout : () -> Unit,
                                 )
                             }
                         }
+
                     }
                 }
             } else {
-                Text(stringResource(id = R.string.no_students_registered), color = Color.Gray)
+                Text("No class found", color = Color.Gray)
             }
         }
 
@@ -351,62 +367,203 @@ fun Settings(onLogout : () -> Unit,
         }
 
     }
-
-    if (showPickerDialog) {
+    if (showEditClassDialog && selectedClass != null) {
         AlertDialog(
-            onDismissRequest = { showPickerDialog = false },
-
-            title = { Text(stringResource(id = R.string.are_you_sure)) },
-            text = { Text(stringResource(id = R.string.selected_student, selectedStudent.name)) },
+            onDismissRequest = {
+                showEditClassDialog = false
+                editedClassName = ""
+            },
+            title = {
+                Text("Edit Class", color = Color.White)
+            },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = editedClassName,
+                        onValueChange = { editedClassName = it },
+                        label = { Text("Class name") },
+                        singleLine = true
+                    )
+                }
+            },
             confirmButton = {
-                TextButton(enabled = selectedStudent != Student("","","") ,onClick = {
-                    showPickerDialog = false
-                    coroutineScope.launch {
-                        isLoadingDelete = true
-                        try {
-                            val response = api.deleteStudentById(
-                                studentId = selectedStudent.id,
-                                email = currentUserEmail
-                            )
-                            if (response.isSuccessful) {
-                                val body = response.body()
-                                Toast.makeText(context, "${body?.message} Total students : ${body?.total_students}", Toast.LENGTH_SHORT).show()
-                                Log.d("debug", body?.message + body?.total_students)
-                            } else {
-                                Toast.makeText(context, "Error: ${response.errorBody()?.string()}", Toast.LENGTH_SHORT).show()
-                            }
-                        } catch (e: Exception) {
-                            Toast.makeText(context, "Failed: ${e.message}", Toast.LENGTH_SHORT).show()
-                        }finally {
-                            isLoadingDelete = false
-                            selectedStudent = Student("","","")
-                        }
+                TextButton(
+                    onClick = {
+                        if (editedClassName.isBlank()) return@TextButton
 
-                        try {
-                            val response = api.listStudents(currentUserEmail)
-                            if (response.isSuccessful) {
-                                students = response.body()?.students ?: emptyList()
-                                Log.d("debug","" + students.toString())
-                            } else {
-                                errorMessage = "Error: ${response.errorBody()?.string()}"
+                        coroutineScope.launch {
+                            isLoading = true
+                            try {
+                                val response = RetrofitInstance.api.updateClass(
+                                    classId = selectedClass!!.id,
+                                    name = editedClassName,
+                                    email = currentUserEmail
+                                )
+
+                                if (response.isSuccessful) {
+                                    // refresh classes (getClasses returns ClassesResponse directly)
+                                    val refreshed = RetrofitInstance.api.getClasses(currentUserEmail)
+                                    classes = refreshed.classes
+
+                                    showEditClassDialog = false
+                                    selectedClass = null
+                                    editedClassName = ""
+                                } else {
+                                    apiMessage = response.errorBody()?.string()
+                                }
+                            } catch (e: Exception) {
+                                apiMessage = e.localizedMessage
+                            } finally {
+                                isLoading = false
                             }
-                        } catch (e: Exception) {
-                            errorMessage = "Exception: ${e.localizedMessage}"
                         }
                     }
-
-                }) { Text(stringResource(id = R.string.delete), color = Color.Red) }
+                ) {
+                    Text("Save")
+                }
             },
-
             dismissButton = {
-                TextButton(onClick = {
-                    showPickerDialog = false
-                    selectedStudent = Student("","","")
-                }) { Text(stringResource(id = R.string.cancel) ,color = Color.Green) }
-            }
+                TextButton(
+                    onClick = {
+                        showEditClassDialog = false
+                        editedClassName = ""
+                    }
+                ) {
+                    Text("Cancel")
+                }
+            },
+            containerColor = Color(0xFF2C2C2C)
         )
     }
+
+    if (showDeleteClassDialog && selectedClass != null) {
+        AlertDialog(
+            onDismissRequest = {
+                showDeleteClassDialog = false
+            },
+            title = {
+                Text("Delete Class", color = Color.White)
+            },
+            text = {
+                Text(
+                    text = "Are you sure you want to delete '${selectedClass!!.name}'?\n\nThis will remove all students in this class.",
+                    color = Color.LightGray
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        coroutineScope.launch {
+                            isLoading = true
+                            try {
+                                val response = RetrofitInstance.api.deleteClass(
+                                    classId = selectedClass!!.id,
+                                    email = currentUserEmail
+                                )
+
+                                if (response.isSuccessful) {
+                                    // refresh classes
+                                    val refreshed = RetrofitInstance.api.getClasses(currentUserEmail)
+                                    classes = refreshed.classes
+                                    showDeleteClassDialog = false
+                                    selectedClass = null
+                                } else {
+                                    apiMessage = response.errorBody()?.string()
+                                }
+                            } catch (e: Exception) {
+                                apiMessage = e.localizedMessage
+                            } finally {
+                                isLoading = false
+                            }
+                        }
+                    }
+                ) {
+                    Text("Delete", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteClassDialog = false
+                    }
+                ) {
+                    Text("Cancel")
+                }
+            },
+            containerColor = Color(0xFF2C2C2C)
+        )
+    }
+
 }
+
+@Composable
+fun ClassRow(
+    classItem: ClassUi,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit,
+    onStudent : () -> Unit
+) {
+    var menuExpanded by remember { mutableStateOf(false) }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+
+        // Class name
+        Text(
+            text = classItem.name,
+            color = Color.White,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.weight(1f)
+        )
+
+        // 3-dot menu
+        Box {
+            IconButton(onClick = { menuExpanded = true }) {
+                Icon(
+                    imageVector = Icons.Default.MoreVert,
+                    contentDescription = "More options",
+                    tint = Color.White
+                )
+            }
+
+            DropdownMenu(
+                expanded = menuExpanded,
+                onDismissRequest = { menuExpanded = false }
+            ) {
+
+                DropdownMenuItem(
+                    text = { Text("Edit") },
+                    onClick = {
+                        menuExpanded = false
+                        onEdit()
+                    }
+                )
+
+                DropdownMenuItem(
+                    text = { Text("Delete", color = Color.Red) },
+                    onClick = {
+                        menuExpanded = false
+                        onDelete()
+                    }
+                )
+
+                DropdownMenuItem(
+                    text = { Text("Students", color = Color.White) },
+                    onClick = {
+                        menuExpanded = false
+                        onStudent()
+                    }
+                )
+            }
+        }
+    }
+}
+
 
 @Composable
 fun StudentRow(student: Student, onEdit: () -> Unit, onDelete: () -> Unit) {
@@ -606,7 +763,7 @@ fun SimpleSearchBar(
     query: String,
     onQueryChange: (String) -> Unit,
     modifier: Modifier = Modifier,
-    placeholder: String = stringResource(R.string.search_student)
+    placeholder: String = "Search Class..."
 ) {
     val focusManager = LocalFocusManager.current
 
@@ -630,8 +787,8 @@ fun SimpleSearchBar(
                 )
             }
         },
-        keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
-        keyboardActions = KeyboardActions(onSearch = {
+        keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+        keyboardActions = KeyboardActions(onDone = {
             focusManager.clearFocus()
         }),
         modifier = modifier

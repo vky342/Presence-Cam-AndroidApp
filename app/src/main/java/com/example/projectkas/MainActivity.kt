@@ -36,6 +36,7 @@ import com.example.projectkas.Screens.Register
 import com.example.projectkas.Screens.Settings
 import com.example.projectkas.Screens.SignUp
 import com.example.projectkas.Screens.Splash
+import com.example.projectkas.Screens.StudentsList
 import com.example.projectkas.ui.theme.LocaleHelper
 import com.example.projectkas.ui.theme.ProjectKASTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -82,9 +83,9 @@ fun KasApp() {
 
     val optionalScreenRoute = "profile/{rollNo}/{studentName}/{id}"
 
-    val showBars = bottomBarScreens.any { it.route == currentRoute }
+    val optionalScreenRoute2 = "student/{classID}"
 
-    val showTopBars = bottomBarScreens.any { it.route == currentRoute || optionalScreenRoute == currentRoute }
+    val showTopBars = bottomBarScreens.any { it.route == currentRoute || optionalScreenRoute == currentRoute || optionalScreenRoute2 == currentRoute}
     val activity = LocalContext.current.findActivity()
 
     Scaffold(containerColor = Color(0xFF181717),
@@ -195,17 +196,29 @@ fun KasApp() {
                     navController = navController
                 ) }
                 composable(
-                    route = "${Screen.Profile.route}/{rollNo}/{studentName}/{id}",
+                    route = "${Screen.Profile.route}/{rollNo}/{studentName}/{id}/{classID}",
                     arguments = listOf(
                         navArgument("rollNo") { type = NavType.StringType },
                         navArgument("studentName") { type = NavType.StringType },
-                        navArgument("id") { type = NavType.StringType }
+                        navArgument("id") { type = NavType.StringType },
+                        navArgument("classID") { type = NavType.StringType }
                     )
                 ) { backStackEntry ->
                     val rollNo = backStackEntry.arguments?.getString("rollNo")
+                    val classID = backStackEntry.arguments?.getString("classID")
                     val studentName = backStackEntry.arguments?.getString("studentName")
                     val id = backStackEntry.arguments?.getString("id")
-                    ProfileScreen(navController = navController, rollNo = rollNo, studentName = studentName, id = id)
+                    ProfileScreen(navController = navController, rollNo = rollNo, studentName = studentName, id = id, classID = classID)
+                }
+
+                composable(
+                    route = "${Screen.Student.route}/{classID}",
+                    arguments = listOf(
+                        navArgument("classID") { type = NavType.StringType },
+                    )
+                ) { backStackEntry ->
+                    val classID = backStackEntry.arguments?.getString("classID")
+                    StudentsList(navController = navController, classID)
                 }
             }
         }
@@ -239,6 +252,8 @@ sealed class Screen(val route: String, val title: String, val icon : String) {
     object Register : Screen(route = "⌆", title = "Register", icon = "⌆")
     object Settings : Screen(route = "⚙︎", title = "Settings", icon = "⚙︎")
     object Profile : Screen("profile", "Profile", "👤")
+
+    object Student : Screen("student", "Students", "")
 
 }
 

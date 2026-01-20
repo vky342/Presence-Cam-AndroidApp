@@ -52,8 +52,8 @@
     <string name="all_faces">All Faces</string>
     <string name="unrecognized">Unrecognized</string>
     <string name="processing">Processing...</string>
-    <string name="student_roll_no">Roll No: %1$s</string>
-    <string name="student_name">Name: %1$s</string>
+    <string name="student_roll_no">Roll No : %1$s</string>
+    <string name="student_name">Name : %1$s</string>
     <string name="unknown">Unknown</string>
     <string name="student">Student</string>
     <string name="tap_to_upload_or_capture">Tap to upload or capture</string>

@@ -38,6 +38,10 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -57,6 +61,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -74,6 +79,7 @@ import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
+import com.example.projectkas.Network.ClassUi
 import com.example.projectkas.Network.RetrofitInstance
 import com.example.projectkas.Network.resizeAndCompress
 import com.example.projectkas.Network.uriToMultipart
@@ -86,6 +92,7 @@ import java.io.File
 import kotlin.collections.plus
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Register(navController: NavController, authViewModel: AuthViewModel = hiltViewModel()){
 
@@ -102,6 +109,32 @@ fun Register(navController: NavController, authViewModel: AuthViewModel = hiltVi
     var isLoading by remember { mutableStateOf(false) }
 
     val focusManager = LocalFocusManager.current
+
+
+    // CLass Block
+
+    var classes by remember { mutableStateOf<List<ClassUi>>(emptyList()) }
+    var selectedClass by remember { mutableStateOf<ClassUi?>(null) }
+    var expanded by remember { mutableStateOf(false) }
+
+    var showCreateClassDialog by remember { mutableStateOf(false) }
+    var newClassName by remember { mutableStateOf("") }
+    var isClassLoading by remember { mutableStateOf(false) }
+
+    LaunchedEffect(currentUserEmail) {
+        try {
+            isClassLoading = true
+            val res = RetrofitInstance.api.getClasses(
+                userEmail = currentUserEmail
+            )
+            classes = res.classes
+        } catch (e: Exception) {
+            Toast.makeText(context, "Failed to load classes", Toast.LENGTH_SHORT).show()
+        } finally {
+            isClassLoading = false
+        }
+    }
+
 
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenMultipleDocuments(),
@@ -167,6 +200,68 @@ fun Register(navController: NavController, authViewModel: AuthViewModel = hiltVi
             thickness = 2.dp,
             modifier = Modifier.width(180.dp)
         )
+
+        Spacer(modifier = Modifier.height(25.dp))
+
+        // NEW CLASS BLOCK
+
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = !expanded }
+        ) {
+            OutlinedTextField(
+                value = selectedClass?.name ?: "",
+                onValueChange = {},
+                readOnly = true,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .menuAnchor(),
+                label = { Text("Select Class") },
+                trailingIcon = {
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                },
+                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next),
+                keyboardActions = KeyboardActions(onNext = {
+                    focusManager.moveFocus(FocusDirection.Down)
+                }),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color(24, 23, 23),
+                    unfocusedContainerColor = Color(24, 23, 23),
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.LightGray,
+                    focusedLabelColor = Color.White,
+                    unfocusedLabelColor = Color.Gray,
+                    focusedIndicatorColor = Color.White,
+                    unfocusedIndicatorColor = Color.Gray
+                )
+            )
+
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                classes.forEach { cls ->
+                    DropdownMenuItem(
+                        text = { Text(cls.name) },
+                        onClick = {
+                            selectedClass = cls
+                            expanded = false
+                        }
+                    )
+                }
+
+                Divider()
+
+                DropdownMenuItem(
+                    text = { Text("➕ Create new class") },
+                    onClick = {
+                        expanded = false
+                        showCreateClassDialog = true
+                    }
+                )
+            }
+        }
+
         Spacer(modifier = Modifier.height(25.dp))
 
         OutlinedTextField(
@@ -189,14 +284,10 @@ fun Register(navController: NavController, authViewModel: AuthViewModel = hiltVi
                 focusedIndicatorColor = Color.White,
                 unfocusedIndicatorColor = Color.Gray
             ),
-            keyboardOptions = KeyboardOptions.Default.copy(
-                imeAction = ImeAction.Done
-            ),
-            keyboardActions = KeyboardActions(
-                onDone = {
-                    focusManager.clearFocus() // Unfocus on Done
-                }
-            )
+            keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next),
+            keyboardActions = KeyboardActions(onNext = {
+                focusManager.moveFocus(FocusDirection.Down)
+            })
         )
 
         OutlinedTextField(
@@ -218,14 +309,10 @@ fun Register(navController: NavController, authViewModel: AuthViewModel = hiltVi
                 focusedIndicatorColor = Color.White,
                 unfocusedIndicatorColor = Color.Gray
             ),
-            keyboardOptions = KeyboardOptions.Default.copy(
-                imeAction = ImeAction.Done
-            ),
-            keyboardActions = KeyboardActions(
-                onDone = {
-                    focusManager.clearFocus() // Unfocus on Done
-                }
-            )
+            keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = {
+                focusManager.clearFocus()
+            })
         )
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -249,7 +336,13 @@ fun Register(navController: NavController, authViewModel: AuthViewModel = hiltVi
                     enabled = selectedUris.isNotEmpty() && Rollno.isNotBlank() && StudentName.isNotBlank() && !isLoading
                 ) {
                     coroutineScope.launch {
-                        if (Rollno.isBlank() || selectedUris.size > 3 || selectedUris.isEmpty() || StudentName.isBlank()) {
+                        if (
+                            Rollno.isBlank() ||
+                            StudentName.isBlank() ||
+                            selectedUris.isEmpty() ||
+                            selectedUris.size > 3 ||
+                            selectedClass == null
+                        ) {
                             apiMessage = context.getString(R.string.enroll_no_and_3_images)
                             return@launch
                         }
@@ -259,6 +352,9 @@ fun Register(navController: NavController, authViewModel: AuthViewModel = hiltVi
                         try {
                             val enrollPart = Rollno.toRequestBody("text/plain".toMediaTypeOrNull())
                             val studentPart = StudentName.toRequestBody("text/plain".toMediaTypeOrNull())
+                            val classIdPart =
+                                selectedClass!!.id.toRequestBody("text/plain".toMediaTypeOrNull())
+
 
                             val imageParts = selectedUris.map { uri ->
                                 val bitmap = MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
@@ -269,9 +365,10 @@ fun Register(navController: NavController, authViewModel: AuthViewModel = hiltVi
 
                                 val response = RetrofitInstance.api.register(
                                 imageParts,
-                                Rollno = enrollPart,
-                                studentName = studentPart,
-                                email = currentUserEmail
+                                    Rollno = enrollPart,
+                                    studentName = studentPart,
+                                    email = currentUserEmail,
+                                    classId = classIdPart
                             )
 
                             if (response.isSuccessful) {
@@ -347,6 +444,60 @@ fun Register(navController: NavController, authViewModel: AuthViewModel = hiltVi
             LaunchedEffect(message) {
                 Toast.makeText(context, message, Toast.LENGTH_LONG).show()
             }
+        }
+
+        // ---------------- CREATE CLASS DIALOG ----------------
+
+        if (showCreateClassDialog) {
+            AlertDialog(
+                onDismissRequest = { showCreateClassDialog = false },
+                title = { Text("Create Class") },
+                text = {
+                    OutlinedTextField(
+                        value = newClassName,
+                        onValueChange = { newClassName = it },
+                        label = { Text("Class name") },
+                        singleLine = true
+                    )
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            if (newClassName.isBlank()) {
+                                Toast.makeText(context, "Class name cannot be empty", Toast.LENGTH_SHORT).show()
+                                return@TextButton
+                            }
+
+                            coroutineScope.launch {
+                                try {
+                                    val created = RetrofitInstance.api.createClass(
+                                        userEmail = currentUserEmail,
+                                        name = newClassName.trim()
+                                    )
+
+                                    classes = classes + created
+                                    selectedClass = created
+                                    newClassName = ""
+                                    showCreateClassDialog = false
+                                } catch (e: Exception) {
+                                    Toast.makeText(
+                                        context,
+                                        "Class already exists or failed",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            }
+                        }
+                    ) {
+                        Text("Create")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showCreateClassDialog = false }) {
+                        Text("Cancel")
+                    }
+                }
+            )
         }
 
     }

@@ -45,6 +45,17 @@ data class RegisterResponse(
     val student: Student?
 )
 
+data class ClassUi(
+    val id: String,
+    val name: String,
+    val created_at: String
+)
+
+data class ClassesResponse(
+    val total: Int,
+    val classes: List<ClassUi>
+)
+
 data class StudentSummary(
     val id: String,
     val roll_no: String?,
@@ -113,6 +124,7 @@ interface ApiService {
     suspend fun register(
         @Part images: List<MultipartBody.Part>,
         @Part("Rollno") Rollno: RequestBody,
+        @Part("classId") classId: RequestBody,
         @Part("studentName") studentName: RequestBody,
         @Header("userEmail") email: String
     ): Response<RegisterResponse>
@@ -136,6 +148,7 @@ interface ApiService {
     // list students (GET) needs header userEmail
     @GET("students")
     suspend fun listStudents(
+        @Query("classId") classId: String?,
         @Header("userEmail") email: String
     ): Response<StudentListResponse>
 
@@ -144,6 +157,7 @@ interface ApiService {
     @HTTP(method = "DELETE", path = "studentDelete", hasBody = true)
     suspend fun deleteStudentById(
         @Field("student_id") studentId: String,
+        @Field("classId") classID: String?,
         @Header("userEmail") email: String
     ): Response<GenericDeleteResponse>
 
@@ -152,6 +166,7 @@ interface ApiService {
     @PUT("studentsUpdate")
     suspend fun updateStudentMetadata(
         @Field("student_id") studentId: String,
+        @Field("classId") classID: String?,
         @Field("roll_no") rollNo: String?, // send null / omit? Retrofit will send "null" as text if you pass null, so pass empty string or overload if needed
         @Field("name") name: String?,
         @Header("userEmail") email: String
@@ -171,6 +186,37 @@ interface ApiService {
     suspend fun getImageByUuidMultipart(
         @Part("uuid") uuidPart: RequestBody
     ): Response<ResponseBody>
+
+    // -------------------- GET /classes --------------------
+    @GET("classes")
+    suspend fun getClasses(
+        @Header("User-Email") userEmail: String
+    ): ClassesResponse
+
+
+    // -------------------- POST /classes --------------------
+    @FormUrlEncoded
+    @POST("classes")
+    suspend fun createClass(
+        @Header("User-Email") userEmail: String,
+        @Field("name") name: String
+    ): ClassUi
+
+    @FormUrlEncoded
+    @PUT("classes")
+    suspend fun updateClass(
+        @Field("classId") classId: String,
+        @Field("name") name: String,
+        @Header("User-Email") email: String
+    ): Response<ClassUi>
+
+    @FormUrlEncoded
+    @HTTP(method = "DELETE", path = "classes", hasBody = true)
+    suspend fun deleteClass(
+        @Field("classId") classId: String,
+        @Header("User-Email") email: String
+    ): Response<GenericDeleteResponse>
+
 }
 
 fun uriToMultipart(context: Context, uri: Uri, paramName: String): MultipartBody.Part {
@@ -194,7 +240,8 @@ object RetrofitInstance {
 
     val api: ApiService by lazy {
         Retrofit.Builder()
-            .baseUrl("http://43.205.133.68/api/")
+            .baseUrl("http://10.0.2.2:8000/")
+            //.baseUrl("http://3.110.79.123:80/api/")
             .client(okHttpClient)//
             .addConverterFactory(GsonConverterFactory.create())
             .build()

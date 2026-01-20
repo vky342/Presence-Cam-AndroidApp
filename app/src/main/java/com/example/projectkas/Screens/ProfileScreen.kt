@@ -32,13 +32,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -49,8 +46,6 @@ import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import coil.compose.rememberAsyncImagePainter
-import com.example.projectkas.Network.RetrofitInstance
 import com.example.projectkas.Network.RetrofitInstance.api
 import com.example.projectkas.Network.resizeAndCompress
 import com.example.projectkas.Network.uriToMultipart
@@ -69,7 +64,7 @@ import java.io.File
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnrememberedGetBackStackEntry")
 @Composable
-fun ProfileScreen(navController: NavController, rollNo: String?, studentName: String?, id : String?) {
+fun ProfileScreen(navController: NavController, rollNo: String?, studentName: String?, id : String?,classID : String?) {
 
     val parentEntry = remember(navController) { navController.getBackStackEntry("main") }
     val authViewModel: AuthViewModel = hiltViewModel(parentEntry)
@@ -312,7 +307,8 @@ fun ProfileScreen(navController: NavController, rollNo: String?, studentName: St
                                 studentId = id,
                                 rollNo = roll.ifBlank { null },
                                 name = name.ifBlank { null },
-                                email = currentUserEmail
+                                email = currentUserEmail,
+                                classID = classID
                             )
                             if (response.isSuccessful) {
                                 val body = response.body()
@@ -418,7 +414,8 @@ fun ProfileScreen(navController: NavController, rollNo: String?, studentName: St
                         try {
                             val response = api.deleteStudentById(
                                 studentId = id,
-                                email = currentUserEmail
+                                email = currentUserEmail,
+                                classID = classID
                             )
                             if (response.isSuccessful) {
                                 val body = response.body()

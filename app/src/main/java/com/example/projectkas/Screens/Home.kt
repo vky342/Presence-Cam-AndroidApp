@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -42,8 +43,10 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FactCheck
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.PhotoLibrary
@@ -56,12 +59,15 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -90,6 +96,7 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.projectkas.Network.RecognizeResponse
 import com.example.projectkas.Network.RecognizedStudent
 import com.example.projectkas.Network.RetrofitInstance
+import com.example.projectkas.Network.Student
 import com.example.projectkas.Network.uriToMultipart
 import com.example.projectkas.R
 import com.example.projectkas.ViewModel.AttendanceViewModel
@@ -102,7 +109,7 @@ import java.util.Date
 import java.util.Locale
 
 
-@SuppressLint("UnrememberedGetBackStackEntry")
+@SuppressLint("UnrememberedGetBackStackEntry", "StringFormatMatches")
 @Composable
 fun Home(
     navController: NavController,
@@ -123,8 +130,13 @@ fun Home(
 
     val debugMode by authViewModel.debugMode.collectAsState()
 
+    var selectedStudentToDelete: RecognizedStudent? by remember { mutableStateOf<RecognizedStudent?>(null) }
+
     var apiResponse by remember { mutableStateOf<RecognizeResponse?>(null) }
     var showAddDialog by remember { mutableStateOf(false) }
+    var showDeleteClassDialog by remember { mutableStateOf(false) }
+    var showResetDialog by remember { mutableStateOf(false) }
+
     val coroutineScope = rememberCoroutineScope()
     var isLoading by remember { mutableStateOf(false) }
 
@@ -307,7 +319,7 @@ fun Home(
                 text = if (recognizedList.isEmpty() && apiResponse == null) stringResource(id = R.string.check_attendance) else stringResource(id = R.string.reset),
                 icon = if (recognizedList.isEmpty() && apiResponse == null) Icons.Default.FactCheck else Icons.Default.Refresh,
                 color = if (recognizedList.isEmpty() && apiResponse == null) Color(0xFF468A9A) else Color(0xFF541212),
-                enabled = selectedPhotoUris.isNotEmpty()
+                enabled = selectedPhotoUris.isNotEmpty() || recognizedList.isNotEmpty()
             ) {
                 if (apiResponse == null && recognizedList.isEmpty()) {
                     coroutineScope.launch {
@@ -355,9 +367,7 @@ fun Home(
                         }
                     }
                 } else {
-                    apiResponse = null
-                    attendanceViewModel.clear()
-                    selectedPhotoUris = emptyList()
+                    showResetDialog = true
                 }
             }
         }
@@ -375,7 +385,7 @@ fun Home(
             Column(Modifier.padding(vertical = 12.dp, horizontal = 12.dp)) {
                 Text(
                     stringResource(id = R.string.recognized_students),
-                    modifier = Modifier.padding(horizontal = 5.dp),
+                    modifier = Modifier.padding(horizontal = 5.dp).align(Alignment.CenterHorizontally),
                     color = Color.White,
                     style = MaterialTheme.typography.titleMedium
                 )
@@ -384,7 +394,10 @@ fun Home(
 
                 AttendanceTable(
                     recognizedList,
-                    onDelete = { attendanceViewModel.removeStudent(it) },
+                    onDelete = {
+                        selectedStudentToDelete = it
+                        showDeleteClassDialog = true
+                               },
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(400.dp)
@@ -464,6 +477,83 @@ fun Home(
         }
     }
 
+    if (showDeleteClassDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showDeleteClassDialog = false
+            },
+            title = {
+                Text("remove this student?", color = Color.White)
+            },
+            text = {
+                Text(
+                    text = "Are you sure you want to remove this student from attendance list?",
+                    color = Color.LightGray
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        selectedStudentToDelete?.let { attendanceViewModel.removeStudent(it) }
+                        showDeleteClassDialog = false
+                    }
+                ) {
+                    Text("Remove", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        selectedStudentToDelete = null
+                        showDeleteClassDialog = false
+                    }
+                ) {
+                    Text("Cancel")
+                }
+            },
+            containerColor = Color(0xFF2C2C2C)
+        )
+    }
+
+    if (showResetDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showResetDialog = false
+            },
+            title = {
+                Text("Reset", color = Color.White)
+            },
+            text = {
+                Text(
+                    text = "Are you sure you want to reset? All the unsaved attendance will be lost along with the picture.",
+                    color = Color.LightGray
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        apiResponse = null
+                        attendanceViewModel.clear()
+                        selectedPhotoUris = emptyList()
+                        showResetDialog = false
+                    }
+                ) {
+                    Text("Reset", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showResetDialog = false
+                    }
+                ) {
+                    Text("Cancel")
+                }
+            },
+            containerColor = Color(0xFF2C2C2C)
+        )
+    }
+
     if (showAddDialog) {
         var enrollInput by remember { mutableStateOf("") }
         var nameInput by remember { mutableStateOf("") }
@@ -474,17 +564,17 @@ fun Home(
             text = {
                 Column {
                     OutlinedTextField(
-                        value = enrollInput,
-                        onValueChange = { enrollInput = it },
-                        label = { Text(stringResource(id = R.string.roll_no)) },
+                        value = nameInput,
+                        onValueChange = { nameInput = it },
+                        label = { Text(stringResource(id = R.string.name)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(Modifier.height(8.dp))
                     OutlinedTextField(
-                        value = nameInput,
-                        onValueChange = { nameInput = it },
-                        label = { Text(stringResource(id = R.string.name)) },
+                        value = enrollInput,
+                        onValueChange = { enrollInput = it },
+                        label = { Text(stringResource(id = R.string.roll_no)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -517,6 +607,7 @@ fun Home(
             },
             containerColor = Color(0xFF2C2C2C)
         )
+
     }
 }
 
@@ -526,6 +617,8 @@ fun AttendanceTable(
     modifier: Modifier = Modifier,
     onDelete: (RecognizedStudent) -> Unit
 ) {
+
+    var expanded by remember { mutableStateOf(false) }
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -543,7 +636,7 @@ fun AttendanceTable(
                 Text(
                     text = stringResource(id = R.string.no_faces_recognized),
                     color = Color.Gray,
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.padding(16.dp).align(Alignment.CenterHorizontally),
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.bodyMedium
                 )
@@ -553,6 +646,7 @@ fun AttendanceTable(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .wrapContentHeight()
                         .padding(vertical = 4.dp),
                     shape = RoundedCornerShape(12.dp),
                     elevation = CardDefaults.cardElevation(4.dp),
@@ -561,48 +655,57 @@ fun AttendanceTable(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(12.dp),
+                            .wrapContentHeight()
+                            .padding(horizontal = 6.dp, vertical = 6.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .height(40.dp)
-                                .clip(RoundedCornerShape(topStart = 12.dp, bottomStart = 12.dp))
-                                .background(Color(0xFFE57373))
-                                .clickable { onDelete(student) }
-                                .padding(horizontal = 12.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Delete,
-                                contentDescription = stringResource(id = R.string.delete),
-                                tint = Color.White,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
 
-                        Spacer(Modifier.width(12.dp))
+                        Spacer(Modifier.width(10.dp))
 
                         Column(Modifier.weight(1f)) {
-                            Text(
-                                text = stringResource(id = R.string.student_roll_no, student.roll_no),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color.White
-                            )
+                            // Name
                             Text(
                                 text = stringResource(id = R.string.student_name, student.name ?: stringResource(id = R.string.unknown)),
-                                style = MaterialTheme.typography.bodySmall,
+                                style = MaterialTheme.typography.bodyLarge,
                                 color = Color.White
+                            )
+                            // Roll no
+                            Text(
+                                text = stringResource(id = R.string.student_roll_no, student.roll_no),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.LightGray
                             )
                         }
 
-                        Icon(
-                            imageVector = Icons.Default.AccountCircle,
-                            contentDescription = stringResource(id = R.string.student),
-                            tint = Color.White,
-                            modifier = Modifier.size(28.dp)
-                        )
+                        Box {
+                            IconButton(onClick = { expanded = true }) {
+                                Icon(
+                                    imageVector = Icons.Default.MoreVert,
+                                    contentDescription = stringResource(id = R.string.more_options),
+                                    tint = Color.White
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = expanded,
+                                onDismissRequest = { expanded = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Remove") },
+                                    onClick = {
+                                        onDelete(student)
+                                        expanded = false
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            Icons.Default.Delete,
+                                            contentDescription = stringResource(id = R.string.delete)
+                                        )
+                                    }
+                                )
+                            }
+                        }
+
                     }
                 }
             }
