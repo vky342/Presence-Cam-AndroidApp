@@ -3,11 +3,11 @@ package com.example.projectkas.Network
 import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.RequestBody
-import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.Retrofit
@@ -134,6 +134,7 @@ interface ApiService {
     @POST("recognize")
     suspend fun recognize(
         @Part files: List<MultipartBody.Part>,
+        @Part("classId") classId: RequestBody,
         @Header("userEmail") email: String
     ): Response<RecognizeResponse>
 
@@ -178,8 +179,10 @@ interface ApiService {
     suspend fun reenrollStudentEmbeddings(
         @Part images: List<MultipartBody.Part>,
         @Part("student_id") studentId: RequestBody,
+        @Part("classId") classId: RequestBody?,
         @Header("userEmail") email: String
     ): Response<ReEnrollResponse>
+
 
     @Multipart
     @POST("images/get")
@@ -219,16 +222,42 @@ interface ApiService {
 
 }
 
-fun uriToMultipart(context: Context, uri: Uri, paramName: String): MultipartBody.Part {
-    val inputStream = context.contentResolver.openInputStream(uri)!!
-    val fileBytes = inputStream.readBytes()
+fun uriToMultipart(
+    context: Context,
+    uri: Uri,
+    paramName: String
+): MultipartBody.Part {
 
-    val mimeType = context.contentResolver.getType(uri) ?: "image/*"
-    val requestFile = fileBytes.toRequestBody(mimeType.toMediaTypeOrNull())
+    val contentResolver = context.contentResolver
 
-    val fileName = "upload_${System.currentTimeMillis()}.${mimeType.substringAfter("/")}"
-    return MultipartBody.Part.createFormData(paramName, fileName, requestFile)
+    val mimeType = contentResolver.getType(uri) ?: "image/jpeg"
+    val extension = mimeType.substringAfter("/", "jpg")
+
+    val tempFile = File.createTempFile(
+        "upload_${System.currentTimeMillis()}",
+        ".$extension",
+        context.cacheDir
+    )
+
+    contentResolver.openInputStream(uri)?.use { input ->
+        tempFile.outputStream().use { output ->
+            input.copyTo(output)
+        }
+    } ?: throw IllegalArgumentException("Unable to open URI")
+
+    if (tempFile.length() < 50_000) {
+        throw IllegalArgumentException("Image too small, likely a thumbnail")
+    }
+
+    val requestBody = tempFile.asRequestBody(mimeType.toMediaType())
+
+    return MultipartBody.Part.createFormData(
+        name = paramName,
+        filename = tempFile.name,
+        body = requestBody
+    )
 }
+
 
 object RetrofitInstance {
 
@@ -241,7 +270,7 @@ object RetrofitInstance {
     val api: ApiService by lazy {
         Retrofit.Builder()
             .baseUrl("http://10.0.2.2:8000/")
-            //.baseUrl("http://3.110.79.123:80/api/")
+            //.baseUrl("http://X.Y.Z.K:80/api/")
             .client(okHttpClient)//
             .addConverterFactory(GsonConverterFactory.create())
             .build()

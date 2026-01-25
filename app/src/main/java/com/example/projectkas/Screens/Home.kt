@@ -11,6 +11,7 @@ import android.os.Environment
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -36,8 +37,11 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.FactCheck
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
@@ -53,7 +57,6 @@ import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Save
-import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -61,14 +64,20 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -79,20 +88,24 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
+import com.example.projectkas.Network.ClassUi
 import com.example.projectkas.Network.RecognizeResponse
 import com.example.projectkas.Network.RecognizedStudent
 import com.example.projectkas.Network.RetrofitInstance
@@ -102,6 +115,8 @@ import com.example.projectkas.R
 import com.example.projectkas.ViewModel.AttendanceViewModel
 import com.example.projectkas.ViewModel.AuthViewModel
 import kotlinx.coroutines.launch
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
@@ -109,6 +124,7 @@ import java.util.Date
 import java.util.Locale
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnrememberedGetBackStackEntry", "StringFormatMatches")
 @Composable
 fun Home(
@@ -132,7 +148,7 @@ fun Home(
 
     var selectedStudentToDelete: RecognizedStudent? by remember { mutableStateOf<RecognizedStudent?>(null) }
 
-    var apiResponse by remember { mutableStateOf<RecognizeResponse?>(null) }
+    var apiResponse = attendanceViewModel.apiResponse
     var showAddDialog by remember { mutableStateOf(false) }
     var showDeleteClassDialog by remember { mutableStateOf(false) }
     var showResetDialog by remember { mutableStateOf(false) }
@@ -140,14 +156,18 @@ fun Home(
     val coroutineScope = rememberCoroutineScope()
     var isLoading by remember { mutableStateOf(false) }
 
+    var classes by remember { mutableStateOf<List<ClassUi>>(emptyList()) }
+    val selectedClass = attendanceViewModel.selectedClass
+    var expanded by remember { mutableStateOf(false) }
+    var isClassLoading by remember { mutableStateOf(false) }
+    val focusManager = LocalFocusManager.current
+
     var latestImageUri by remember { mutableStateOf<Uri?>(null) }
 
     val galleryLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument(),
+        contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = 4),
         onResult = { uri ->
-            if (uri != null) {
-                selectedPhotoUris = selectedPhotoUris + uri
-            }
+            selectedPhotoUris = selectedPhotoUris + uri
         }
     )
 
@@ -239,6 +259,21 @@ fun Home(
     }
 
 
+    LaunchedEffect(currentUserEmail) {
+        try {
+            isClassLoading = true
+            val res = RetrofitInstance.api.getClasses(
+                userEmail = currentUserEmail
+            )
+            classes = res.classes
+        } catch (e: Exception) {
+            Toast.makeText(context, "Failed to load classes", Toast.LENGTH_SHORT).show()
+        } finally {
+            isClassLoading = false
+        }
+    }
+
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -270,15 +305,67 @@ fun Home(
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = !expanded }
+        ) {
+            OutlinedTextField(
+                value = selectedClass?.name ?: "",
+                onValueChange = {},
+                readOnly = true,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .menuAnchor(MenuAnchorType.PrimaryNotEditable, true),
+                label = { Text("Select Class") },
+                trailingIcon = {
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                },
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color(24, 23, 23),
+                    unfocusedContainerColor = Color(24, 23, 23),
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.LightGray,
+                    focusedLabelColor = Color.White,
+                    unfocusedLabelColor = Color.Gray,
+                    focusedIndicatorColor = Color.White,
+                    unfocusedIndicatorColor = Color.Gray
+                )
+            )
+
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = {
+                    expanded = false
+                    focusManager.clearFocus()
+                }
+            ) {
+                classes.forEach { cls ->
+                    DropdownMenuItem(
+                        text = { Text(cls.name) },
+                        onClick = {
+                            attendanceViewModel.setClass(cls)
+                            expanded = false
+                            focusManager.clearFocus()
+                        }
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
         ImagePickerContainer(
             selectedPhotoUris = selectedPhotoUris,
-            onAddUpload = { galleryLauncher.launch(arrayOf("image/*")) },
+            onAddUpload = { galleryLauncher.launch(
+                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+            ) },
             onAddCapture = {
                 val newUri = createImageFileUri(context)
                 latestImageUri = newUri
                 cameraLauncher.launch(newUri)
             },
-            onRemove = { uri -> selectedPhotoUris = selectedPhotoUris - uri }
+            onRemove = { uri -> selectedPhotoUris = selectedPhotoUris - uri },
+            enable = recognizedList.isEmpty()
         )
 
 
@@ -316,12 +403,12 @@ fun Home(
             }
         } else {
             ActionCard(
-                text = if (recognizedList.isEmpty() && apiResponse == null) stringResource(id = R.string.check_attendance) else stringResource(id = R.string.reset),
-                icon = if (recognizedList.isEmpty() && apiResponse == null) Icons.Default.FactCheck else Icons.Default.Refresh,
+                text = if (recognizedList.isEmpty() && apiResponse == null ) stringResource(id = R.string.check_attendance) else stringResource(id = R.string.reset),
+                icon = if (recognizedList.isEmpty() && apiResponse == null) Icons.AutoMirrored.Filled.FactCheck else Icons.Default.Refresh,
                 color = if (recognizedList.isEmpty() && apiResponse == null) Color(0xFF468A9A) else Color(0xFF541212),
                 enabled = selectedPhotoUris.isNotEmpty() || recognizedList.isNotEmpty()
             ) {
-                if (apiResponse == null && recognizedList.isEmpty()) {
+                if (apiResponse == null && recognizedList.isEmpty() && selectedClass != null) {
                     coroutineScope.launch {
                         isLoading = true
                         try {
@@ -330,43 +417,76 @@ fun Home(
                                     uriToMultipart(context, uri, "files")
                                 }
 
+                                Log.e("DBG", "classId string = ${selectedClass.id}")
+
+                                val classIdBody =
+                                    selectedClass!!.id.toRequestBody("text/plain".toMediaType())
+
                                 val response = if (debugMode) {
                                     RetrofitInstance.api.debugRecognize(
                                         files = imageParts,
                                         email = currentUserEmail
                                     )
                                 } else {
+                                    Log.e(
+                                        "ERR",
+                                        "Home: ${imageParts} ${currentUserEmail} ${classIdBody}",
+                                    )
                                     RetrofitInstance.api.recognize(
                                         files = imageParts,
-                                        email = currentUserEmail
+                                        email = currentUserEmail,
+                                        classId = classIdBody
                                     )
                                 }
 
                                 response?.let { res ->
                                     if (res.isSuccessful) {
                                         val body = res.body()
-                                        apiResponse = body
-                                        attendanceViewModel.setRecognized(body?.recognized_students ?: emptyList())
+                                        attendanceViewModel.apiResponse = body
+                                        Log.e("ERR", "Home: $apiResponse")
+                                        attendanceViewModel.setRecognized(
+                                            body?.recognized_students ?: emptyList()
+                                        )
                                     } else {
                                         val code = res.code()
                                         val msg = res.message()
-                                        val err = try { res.errorBody()?.string() } catch (_: Exception) { null }
-                                        Log.e("API", "Unsuccessful: code=$code, message=$msg, error=$err")
-                                        Toast.makeText(context, context.getString(R.string.api_error, code), Toast.LENGTH_SHORT).show()
+                                        val err = try {
+                                            res.errorBody()?.string()
+                                        } catch (_: Exception) {
+                                            null
+                                        }
+                                        Log.e(
+                                            "API",
+                                            "Unsuccessful: code=$code, message=$msg, error=$err"
+                                        )
+                                        Toast.makeText(
+                                            context,
+                                            context.getString(R.string.api_error, code),
+                                            Toast.LENGTH_SHORT
+                                        ).show()
                                     }
                                 } ?: run {
-                                    Toast.makeText(context, context.getString(R.string.null_response_from_server), Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(
+                                        context,
+                                        context.getString(R.string.null_response_from_server),
+                                        Toast.LENGTH_SHORT
+                                    ).show()
                                 }
 
                             }
                         } catch (e: Exception) {
-                            Log.e("DEBUG","Exception: ${e.message}")
-                            Toast.makeText(context, context.getString(R.string.exception, e.message), Toast.LENGTH_SHORT).show()
+                            Log.e("DEBUG", "Exception: ${e.message}")
+                            Toast.makeText(
+                                context,
+                                context.getString(R.string.exception, e.message),
+                                Toast.LENGTH_SHORT
+                            ).show()
                         } finally {
                             isLoading = false
                         }
                     }
-                } else {
+                }
+                 else{
                     showResetDialog = true
                 }
             }
@@ -385,7 +505,9 @@ fun Home(
             Column(Modifier.padding(vertical = 12.dp, horizontal = 12.dp)) {
                 Text(
                     stringResource(id = R.string.recognized_students),
-                    modifier = Modifier.padding(horizontal = 5.dp).align(Alignment.CenterHorizontally),
+                    modifier = Modifier
+                        .padding(horizontal = 5.dp)
+                        .align(Alignment.CenterHorizontally),
                     color = Color.White,
                     style = MaterialTheme.typography.titleMedium
                 )
@@ -415,7 +537,14 @@ fun Home(
                         icon = Icons.Default.PersonAdd,
                         color = Color(0xFF468A9A),
                         modifier = Modifier.weight(1f)
-                    ) { showAddDialog = true }
+                    ) {
+                        if (selectedClass != null){
+                            showAddDialog = true
+                        }
+                        Toast.makeText(context, "Select Class Please", Toast.LENGTH_SHORT).show()
+
+
+                    }
 
                     SmallActionCard(
                         text = stringResource(id = R.string.save),
@@ -534,7 +663,9 @@ fun Home(
                     onClick = {
                         apiResponse = null
                         attendanceViewModel.clear()
+                        attendanceViewModel.resetClass()
                         selectedPhotoUris = emptyList()
+                        attendanceViewModel.apiResponse = null
                         showResetDialog = false
                     }
                 ) {
@@ -636,7 +767,9 @@ fun AttendanceTable(
                 Text(
                     text = stringResource(id = R.string.no_faces_recognized),
                     color = Color.Gray,
-                    modifier = Modifier.padding(16.dp).align(Alignment.CenterHorizontally),
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .align(Alignment.CenterHorizontally),
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.bodyMedium
                 )
@@ -745,18 +878,20 @@ fun ActionCard(
     }
 }
 
+@SuppressLint("FrequentlyChangingValue")
 @Composable
 fun ImagePickerContainer(
     selectedPhotoUris: List<Uri>,
     onAddUpload: () -> Unit,
     onAddCapture: () -> Unit,
-    onRemove: (Uri) -> Unit
+    onRemove: (Uri) -> Unit,
+    enable : Boolean
 ) {
-    var showAddMenu by remember { mutableStateOf(false) }
+
     val listState = rememberLazyListState()
 
     Column(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(0.9f)
     ) {
         if (selectedPhotoUris.isEmpty()) {
             Box(
@@ -765,7 +900,7 @@ fun ImagePickerContainer(
                     .height(200.dp)
                     .clip(RoundedCornerShape(16.dp))
                     .background(Color(0xFF2C2C2C))
-                    .clickable { onAddUpload() },
+                    .clickable(enable) { onAddUpload() },
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -792,7 +927,8 @@ fun ImagePickerContainer(
                     }
                 }
             }
-        } else {
+        }
+        else if ( selectedPhotoUris.size < 4 ) {
             Box(modifier = Modifier.height(90.dp)) {
                 LazyRow(
                     state = listState,
@@ -806,57 +942,14 @@ fun ImagePickerContainer(
                                 .aspectRatio(1f)
                                 .clip(RoundedCornerShape(12.dp))
                                 .background(Color(0xFF2C2C2C))
-                                .clickable { showAddMenu = true },
+                                .clickable(enable) {
+                                    onAddCapture()
+                                },
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(Icons.Default.Add, contentDescription = stringResource(id = R.string.add), tint = Color.White)
+                            Icon(Icons.Default.PhotoCamera, contentDescription = stringResource(id = R.string.add), tint = Color.White)
                         }
 
-                        if (showAddMenu) {
-                            AlertDialog(
-                                onDismissRequest = { showAddMenu = false },
-                                title = {
-                                    Text(
-                                        stringResource(id = R.string.add_image),
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = Color.White
-                                    )
-                                },
-                                text = {
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(80.dp),
-                                        verticalArrangement = Arrangement.spacedBy(16.dp),
-                                        horizontalAlignment = Alignment.CenterHorizontally
-                                    ) {
-                                        SmallActionCard(
-                                            text = stringResource(id = R.string.upload_from_gallery),
-                                            icon = Icons.Default.UploadFile,
-                                            color = Color(0xFF468A9A),
-                                            modifier = Modifier.fillMaxWidth()
-                                        ) {
-                                            showAddMenu = false
-                                            onAddUpload()
-                                        }
-
-                                        SmallActionCard(
-                                            text = stringResource(id = R.string.capture_with_camera),
-                                            icon = Icons.Default.PhotoCamera,
-                                            color = Color(0xFF8A9A46),
-                                            modifier = Modifier.fillMaxWidth()
-                                        ) {
-                                            showAddMenu = false
-                                            onAddCapture()
-                                        }
-                                    }
-                                },
-                                confirmButton = {},
-                                dismissButton = {},
-                                containerColor = Color(0xFF2C2C2C),
-                                shape = RoundedCornerShape(16.dp)
-                            )
-                        }
                     }
 
                     items(selectedPhotoUris) { uri ->
@@ -882,23 +975,63 @@ fun ImagePickerContainer(
                     }
                 }
 
-                val showFade = listState.layoutInfo.totalItemsCount > 0 &&
-                        (listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
-                            ?: 0) < listState.layoutInfo.totalItemsCount - 1
-
-                if (showFade) {
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.CenterEnd)
-                            .width(40.dp)
-                            .fillMaxHeight()
-                            .background(
-                                Brush.horizontalGradient(
-                                    listOf(Color.Transparent, Color(0xFF2C2C2C))
-                                )
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .width(40.dp)
+                        .fillMaxHeight()
+                        .background(
+                            Brush.horizontalGradient(
+                                listOf(Color.Transparent, Color(0x6DDDE0E0))
                             )
-                    )
+                        )
+                )
+
+            }
+        }
+        else {
+            Box(modifier = Modifier.height(90.dp)) {
+
+                LazyRow(
+                    state = listState,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    items(selectedPhotoUris) { uri ->
+                        Box {
+                            Image(
+                                painter = rememberAsyncImagePainter(uri),
+                                contentDescription = stringResource(id = R.string.selected_image),
+                                modifier = Modifier
+                                    .aspectRatio(1f)
+                                    .fillMaxHeight()
+                                    .clip(RoundedCornerShape(12.dp)),
+                                contentScale = ContentScale.Crop
+                            )
+                            IconButton(
+                                onClick = { onRemove(uri) },
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .background(Color.Black.copy(alpha = 0.6f), CircleShape)
+                            ) {
+                                Icon(Icons.Default.Close, contentDescription = stringResource(id = R.string.remove), tint = Color.White)
+                            }
+                        }
+                    }
                 }
+
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .width(40.dp)
+                        .fillMaxHeight()
+                        .background(
+                            Brush.horizontalGradient(
+                                listOf(Color.Transparent, Color(0x6DDDE0E0))
+                            )
+                        )
+                )
+
             }
         }
     }

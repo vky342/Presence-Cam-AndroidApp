@@ -238,7 +238,10 @@ fun Register(navController: NavController, authViewModel: AuthViewModel = hiltVi
 
             ExposedDropdownMenu(
                 expanded = expanded,
-                onDismissRequest = { expanded = false }
+                onDismissRequest = {
+                    expanded = false
+                    focusManager.clearFocus()
+                }
             ) {
                 classes.forEach { cls ->
                     DropdownMenuItem(
@@ -246,6 +249,7 @@ fun Register(navController: NavController, authViewModel: AuthViewModel = hiltVi
                         onClick = {
                             selectedClass = cls
                             expanded = false
+                            focusManager.moveFocus(focusDirection = FocusDirection.Down)
                         }
                     )
                 }

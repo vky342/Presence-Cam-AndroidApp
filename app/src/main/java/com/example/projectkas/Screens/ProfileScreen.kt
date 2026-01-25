@@ -56,6 +56,7 @@ import com.example.projectkas.ViewModel.AuthViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -64,7 +65,10 @@ import java.io.File
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnrememberedGetBackStackEntry")
 @Composable
-fun ProfileScreen(navController: NavController, rollNo: String?, studentName: String?, id : String?,classID : String?) {
+fun ProfileScreen(
+    navController: NavController, rollNo: String?, studentName: String?, id: String?,
+    classID: String?
+) {
 
     val parentEntry = remember(navController) { navController.getBackStackEntry("main") }
     val authViewModel: AuthViewModel = hiltViewModel(parentEntry)
@@ -506,7 +510,8 @@ fun ProfileScreen(navController: NavController, rollNo: String?, studentName: St
                                     val response = api.reenrollStudentEmbeddings(
                                         images = imageParts,
                                         studentId = idPart,
-                                        email = currentUserEmail
+                                        email = currentUserEmail,
+                                        classId = classID?.toRequestBody("text/plain".toMediaType())
                                     )
 
                                     if (response.isSuccessful) {
