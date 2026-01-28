@@ -183,7 +183,7 @@ fun ProfileScreen(
     Column(
         Modifier
             .fillMaxSize()
-            .background(color = Color(24, 23, 23))
+            .background(color = MaterialTheme.colorScheme.background)
             .padding(top = 4.dp, start = 16.dp, end = 16.dp, bottom = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -191,13 +191,13 @@ fun ProfileScreen(
             text = stringResource(id = R.string.edit_profile),
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
-            color = Color.White,
+            color = MaterialTheme.colorScheme.onBackground,
             style = MaterialTheme.typography.headlineSmall
         )
 
         Spacer(modifier = Modifier.height(4.dp))
         Divider(
-            color = Color(0xFF468A9A), // teal accent
+            color = MaterialTheme.colorScheme.primary, // teal accent
             thickness = 2.dp,
             modifier = Modifier.width(180.dp)
         )
@@ -208,7 +208,7 @@ fun ProfileScreen(
             modifier = Modifier
                 .size(120.dp)
                 .clip(CircleShape)
-                .background(Color.Gray),
+                .background(MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center
         ) {
             when {
@@ -242,17 +242,17 @@ fun ProfileScreen(
             label = { Text(stringResource(id = R.string.name)) },
             modifier = Modifier.fillMaxWidth(),
             colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color(24, 23, 23),
-                unfocusedContainerColor = Color(24, 23, 23),
+                focusedContainerColor = MaterialTheme.colorScheme.background,
+                unfocusedContainerColor = MaterialTheme.colorScheme.background,
 
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.LightGray,
+                focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                unfocusedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
 
-                focusedLabelColor = Color.White,
-                unfocusedLabelColor = Color.Gray,
+                focusedLabelColor = MaterialTheme.colorScheme.onBackground,
+                unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
 
-                focusedIndicatorColor = Color.White,
-                unfocusedIndicatorColor = Color.Gray
+                focusedIndicatorColor = MaterialTheme.colorScheme.onBackground,
+                unfocusedIndicatorColor = MaterialTheme.colorScheme.outline
             ),
             keyboardOptions = KeyboardOptions.Default.copy(
                 imeAction = ImeAction.Done
@@ -271,17 +271,17 @@ fun ProfileScreen(
             label = { Text(stringResource(id = R.string.roll_no)) },
             modifier = Modifier.fillMaxWidth(),
             colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color(24, 23, 23),
-                unfocusedContainerColor = Color(24, 23, 23),
+                focusedContainerColor = MaterialTheme.colorScheme.background,
+                unfocusedContainerColor = MaterialTheme.colorScheme.background,
 
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.LightGray,
+                focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                unfocusedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
 
-                focusedLabelColor = Color.White,
-                unfocusedLabelColor = Color.Gray,
+                focusedLabelColor = MaterialTheme.colorScheme.onBackground,
+                unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
 
-                focusedIndicatorColor = Color.White,
-                unfocusedIndicatorColor = Color.Gray
+                focusedIndicatorColor = MaterialTheme.colorScheme.onBackground,
+                unfocusedIndicatorColor = MaterialTheme.colorScheme.outline
             ),
             keyboardOptions = KeyboardOptions.Default.copy(
                 imeAction = ImeAction.Done
@@ -337,14 +337,14 @@ fun ProfileScreen(
                     .weight(1f)
                     .height(50.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF3A3A3A), // Darker container
-                    contentColor = Color.White
+                    containerColor = MaterialTheme.colorScheme.primary, // Darker container
+                    contentColor = MaterialTheme.colorScheme.onBackground
                 )
             ) {
 
                 if (isLoading) {
                     CircularProgressIndicator(
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onBackground,
                         strokeWidth = 2.dp,
                         modifier = Modifier.size(20.dp)
                     )
@@ -352,7 +352,7 @@ fun ProfileScreen(
                     Text(
                         stringResource(id = R.string.saving),
                         style = MaterialTheme.typography.titleMedium,
-                        color = Color.White
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                 }else{
                     Icon(
@@ -374,14 +374,14 @@ fun ProfileScreen(
                     .weight(1f)
                     .height(50.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF8B1A1A),
-                    contentColor = Color.White
+                    containerColor = MaterialTheme.colorScheme.error,
+                    contentColor = MaterialTheme.colorScheme.onBackground
                 )
             ) {
 
                 if(isLoadingDelete){
                     CircularProgressIndicator(
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onBackground,
                         strokeWidth = 2.dp,
                         modifier = Modifier.size(20.dp)
                     )
@@ -389,7 +389,7 @@ fun ProfileScreen(
                     Text(
                         stringResource(id = R.string.deleting),
                         style = MaterialTheme.typography.titleMedium,
-                        color = Color.White
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                 }else{
                     Icon(
@@ -439,13 +439,13 @@ fun ProfileScreen(
                         }
                     }
 
-                }) { Text(stringResource(id = R.string.delete), color = Color.Red) }
+                }) { Text(stringResource(id = R.string.delete), color = MaterialTheme.colorScheme.error) }
             },
 
             dismissButton = {
                 TextButton(onClick = {
                     showPickerDialog = false
-                }) { Text(stringResource(id = R.string.cancel) ,color = Color.Green) }
+                }) { Text(stringResource(id = R.string.cancel) ,color = MaterialTheme.colorScheme.primary )}
             }
         )
     }
@@ -458,7 +458,7 @@ fun ProfileScreen(
             modifier = Modifier
                 .fillMaxSize()
                 // draw a faint scrim so user knows it's modal
-                .background(Color.Black.copy(alpha = 0.3f))
+                .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
                 // intercept taps
                 .pointerInput(Unit) {
                     detectTapGestures(onTap = { showReEnroll = false })
@@ -469,7 +469,7 @@ fun ProfileScreen(
                 .clip(RoundedCornerShape(16.dp))
                 .wrapContentSize()
                 .padding(16.dp)
-                .background(Color(0xFF2C2C2C), shape = RoundedCornerShape(16.dp))) {
+                .background(MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(16.dp))) {
                 MultiImagePickerContainer(
                     selectedUris = selectedUris,
                     onUpload = { galleryLauncher.launch(arrayOf("image/*")) },
@@ -542,9 +542,9 @@ fun ProfileScreen(
                     elevation = CardDefaults.cardElevation(8.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = when {
-                            isLoading -> Color(0xFF3A3A3A) // dimmed while loading
-                            selectedUris.size <= 3 && selectedUris.isNotEmpty() -> Color(0xFF468A9A) // teal active
-                            else -> Color(0xFF541212) // red inactive
+                            isLoading -> MaterialTheme.colorScheme.surfaceVariant // dimmed while loading
+                            selectedUris.size <= 3 && selectedUris.isNotEmpty() -> MaterialTheme.colorScheme.primary // teal active
+                            else -> MaterialTheme.colorScheme.error // red inactive
                         }
                     )
                 ) {
@@ -557,7 +557,7 @@ fun ProfileScreen(
                     ) {
                         if (isLoading) {
                             CircularProgressIndicator(
-                                color = Color.White,
+                                color = MaterialTheme.colorScheme.onBackground,
                                 strokeWidth = 2.dp,
                                 modifier = Modifier.size(20.dp)
                             )
@@ -565,19 +565,19 @@ fun ProfileScreen(
                             Text(
                                 stringResource(id = R.string.registering),
                                 style = MaterialTheme.typography.titleMedium,
-                                color = Color.White
+                                color = MaterialTheme.colorScheme.onBackground
                             )
                         } else {
                             Icon(
                                 imageVector = Icons.Default.PersonAdd,
                                 contentDescription = "Register",
-                                tint = Color.Black
+                                tint = MaterialTheme.colorScheme.onSurface
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 stringResource(id = R.string.register),
                                 style = MaterialTheme.typography.titleMedium,
-                                color = Color.Black
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                         }
                     }

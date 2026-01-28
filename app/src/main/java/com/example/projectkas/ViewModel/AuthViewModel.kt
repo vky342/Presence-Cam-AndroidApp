@@ -18,10 +18,15 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
 import javax.inject.Inject
 
+import com.example.projectkas.Module.ThemeMode
+import com.example.projectkas.Module.ThemeRepository
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 
 
 @HiltViewModel
-class AuthViewModel @Inject constructor() : ViewModel()  {
+class AuthViewModel @Inject constructor( private val themeRepository: ThemeRepository) : ViewModel()  {
 
     val auth = FirebaseAuth.getInstance()
 
@@ -99,6 +104,14 @@ class AuthViewModel @Inject constructor() : ViewModel()  {
     fun signout(){
         auth.signOut()
         _authState.value = AuthState.Unauthenticated
+    }
+    val currentTheme: StateFlow<ThemeMode> = themeRepository.getThemeFlow()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, ThemeMode.SYSTEM)
+
+    fun setTheme(mode: ThemeMode) {
+        viewModelScope.launch {
+            themeRepository.saveTheme(mode)
+        }
     }
 
 

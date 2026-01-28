@@ -108,7 +108,7 @@ fun StudentsList(navController: NavController, classID: String?,authViewModel: A
     Column(
         Modifier
             .fillMaxSize()
-            .background(color = Color(24, 23, 23))
+            .background(color = MaterialTheme.colorScheme.background)
             .padding(top = 4.dp, start = 16.dp, end = 16.dp, bottom = 4.dp)
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -116,7 +116,7 @@ fun StudentsList(navController: NavController, classID: String?,authViewModel: A
         Text(
             text = "Students",
             textAlign = TextAlign.Center,
-            color = Color.White,
+            color = MaterialTheme.colorScheme.onBackground,
             style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
         )
 
@@ -142,10 +142,10 @@ fun StudentsList(navController: NavController, classID: String?,authViewModel: A
 
         // Student table
         if (isLoading) {
-            CircularProgressIndicator(color = Color.White)
+            CircularProgressIndicator(color = MaterialTheme.colorScheme.onBackground)
         } else if (errorMessage != null) {
             Log.e("ERROR", "" + errorMessage)
-            Text("Server Error - unable to connect", color = Color.Red)
+            Text("Server Error - unable to connect", color = MaterialTheme.colorScheme.error)
         } else {
             if (filteredStudents.isNotEmpty()) {
                 Card(
@@ -154,17 +154,17 @@ fun StudentsList(navController: NavController, classID: String?,authViewModel: A
                         .height(400.dp),
                     shape = RoundedCornerShape(12.dp),
                     elevation = CardDefaults.cardElevation(4.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C2C))
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
                     Column(Modifier.padding(12.dp)) {
                         Text(
                             text = stringResource(id = R.string.registered_students) + " - " + filteredStudents.size,
-                            color = Color.White,
+                            color = MaterialTheme.colorScheme.onBackground,
                             style = MaterialTheme.typography.titleMedium,
                             modifier = Modifier.align(Alignment.CenterHorizontally).padding(bottom = 8.dp)
                         )
                         Divider(
-                            color = Color.Gray,
+                            color = MaterialTheme.colorScheme.outline,
                             thickness = 1.dp
                         )
 
@@ -183,7 +183,7 @@ fun StudentsList(navController: NavController, classID: String?,authViewModel: A
                                     }
                                 )
                                 Divider(
-                                    color = Color.DarkGray,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     thickness = 0.5.dp
                                 )
                             }
@@ -191,7 +191,7 @@ fun StudentsList(navController: NavController, classID: String?,authViewModel: A
                     }
                 }
             } else {
-                Text("No student found", color = Color.Gray)
+                Text("No student found", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
 
@@ -239,14 +239,14 @@ fun StudentsList(navController: NavController, classID: String?,authViewModel: A
                             }
                         }
 
-                    }) { Text(stringResource(id = R.string.delete), color = Color.Red) }
+                    }) { Text(stringResource(id = R.string.delete), color = MaterialTheme.colorScheme.error) }
                 },
 
                 dismissButton = {
                     TextButton(onClick = {
                         showPickerDialog = false
                         selectedStudent = Student("","","")
-                    }) { Text(stringResource(id = R.string.cancel) ,color = Color.Green) }
+                    }) { Text(stringResource(id = R.string.cancel) ,color = MaterialTheme.colorScheme.primary) }
                 }
             )
 
