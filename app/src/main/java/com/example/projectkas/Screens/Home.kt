@@ -278,7 +278,7 @@ fun Home(
         modifier = Modifier
             .fillMaxSize()
             .background(
-                Color(24, 23, 23)
+                MaterialTheme.colorScheme.background
             )
             .padding(top = 4.dp, start = 16.dp, end = 16.dp, bottom = 4.dp)
             .verticalScroll(rememberScrollState()),
@@ -289,14 +289,14 @@ fun Home(
             text = stringResource(id = R.string.presence_cam),
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center,
-            color = Color.White,
+            color = MaterialTheme.colorScheme.onBackground,
             style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
         )
 
         Spacer(modifier = Modifier.height(4.dp))
 
         Divider(
-            color = Color(0xFF468A9A),
+            color = MaterialTheme.colorScheme.primary ,
             thickness = 2.dp,
             modifier = Modifier
                 .width(180.dp)
@@ -321,14 +321,14 @@ fun Home(
                     ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
                 },
                 colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color(24, 23, 23),
-                    unfocusedContainerColor = Color(24, 23, 23),
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.LightGray,
-                    focusedLabelColor = Color.White,
-                    unfocusedLabelColor = Color.Gray,
-                    focusedIndicatorColor = Color.White,
-                    unfocusedIndicatorColor = Color.Gray
+                    focusedContainerColor = MaterialTheme.colorScheme.surface,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,  // ✅
+                    focusedLabelColor = MaterialTheme.colorScheme.primary,  // ✅
+                    unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,  // ✅
+                    focusedIndicatorColor = MaterialTheme.colorScheme.primary,  // ✅
+                    unfocusedIndicatorColor = MaterialTheme.colorScheme.outline  // ✅
                 )
             )
 
@@ -379,7 +379,7 @@ fun Home(
                     .padding(horizontal = 16.dp),
                 shape = RoundedCornerShape(25.dp),
                 elevation = CardDefaults.cardElevation(8.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF3A3A3A))
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
             ) {
                 Row(
                     modifier = Modifier
@@ -389,7 +389,7 @@ fun Home(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     CircularProgressIndicator(
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onBackground,
                         strokeWidth = 2.dp,
                         modifier = Modifier.size(20.dp)
                     )
@@ -397,7 +397,7 @@ fun Home(
                     Text(
                         stringResource(id = R.string.processing),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                 }
             }
@@ -405,7 +405,9 @@ fun Home(
             ActionCard(
                 text = if (recognizedList.isEmpty() && apiResponse == null ) stringResource(id = R.string.check_attendance) else stringResource(id = R.string.reset),
                 icon = if (recognizedList.isEmpty() && apiResponse == null) Icons.AutoMirrored.Filled.FactCheck else Icons.Default.Refresh,
-                color = if (recognizedList.isEmpty() && apiResponse == null) Color(0xFF468A9A) else Color(0xFF541212),
+                color = if (recognizedList.isEmpty() && apiResponse == null)
+                    MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.error,
                 enabled = selectedPhotoUris.isNotEmpty() || recognizedList.isNotEmpty()
             ) {
                 if (apiResponse == null && recognizedList.isEmpty() && selectedClass != null) {
@@ -500,7 +502,7 @@ fun Home(
                 .padding(horizontal = 10.dp),
             shape = RoundedCornerShape(12.dp),
             elevation = CardDefaults.cardElevation(4.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C2C))
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
             Column(Modifier.padding(vertical = 12.dp, horizontal = 12.dp)) {
                 Text(
@@ -508,7 +510,7 @@ fun Home(
                     modifier = Modifier
                         .padding(horizontal = 5.dp)
                         .align(Alignment.CenterHorizontally),
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onBackground,
                     style = MaterialTheme.typography.titleMedium
                 )
 
@@ -535,7 +537,7 @@ fun Home(
                     SmallActionCard(
                         text = stringResource(id = R.string.add),
                         icon = Icons.Default.PersonAdd,
-                        color = Color(0xFF468A9A),
+                        color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.weight(1f)
                     ) {
                         if (selectedClass != null){
@@ -549,7 +551,7 @@ fun Home(
                     SmallActionCard(
                         text = stringResource(id = R.string.save),
                         icon = Icons.Default.PictureAsPdf,
-                        color = Color(0xFF8A9A46),
+                        color = MaterialTheme.colorScheme.secondary,
                         modifier = Modifier.weight(1f)
                     ) { createDocumentLauncher.launch("attendance_list.pdf") }
                 }
@@ -565,12 +567,12 @@ fun Home(
                     .padding(horizontal = 10.dp),
                 shape = RoundedCornerShape(12.dp),
                 elevation = CardDefaults.cardElevation(4.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C2C))
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(Modifier.padding(12.dp)) {
                     Text(
                         stringResource(id = R.string.debug_returned_images), // Assumes this string exists
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onBackground,
                         style = MaterialTheme.typography.titleMedium
                     )
 
@@ -594,7 +596,7 @@ fun Home(
                     SmallActionCard(
                         text = stringResource(id = R.string.save_images),
                         icon = Icons.Default.Save,
-                        color = Color(0xFF468A9A),
+                        color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         apiResponse?.annotated_all?.let { saveBase64Image(context, it, "annotated_all.jpg") }
@@ -612,12 +614,12 @@ fun Home(
                 showDeleteClassDialog = false
             },
             title = {
-                Text("remove this student?", color = Color.White)
+                Text("remove this student?", color = MaterialTheme.colorScheme.onBackground)
             },
             text = {
                 Text(
                     text = "Are you sure you want to remove this student from attendance list?",
-                    color = Color.LightGray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             },
             confirmButton = {
@@ -627,7 +629,7 @@ fun Home(
                         showDeleteClassDialog = false
                     }
                 ) {
-                    Text("Remove", color = Color.Red)
+                    Text("Remove", color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
@@ -640,7 +642,7 @@ fun Home(
                     Text("Cancel")
                 }
             },
-            containerColor = Color(0xFF2C2C2C)
+            containerColor = MaterialTheme.colorScheme.surface
         )
     }
 
@@ -650,12 +652,12 @@ fun Home(
                 showResetDialog = false
             },
             title = {
-                Text("Reset", color = Color.White)
+                Text("Reset", color = MaterialTheme.colorScheme.onBackground)
             },
             text = {
                 Text(
                     text = "Are you sure you want to reset? All the unsaved attendance will be lost along with the picture.",
-                    color = Color.LightGray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             },
             confirmButton = {
@@ -669,7 +671,7 @@ fun Home(
                         showResetDialog = false
                     }
                 ) {
-                    Text("Reset", color = Color.Red)
+                    Text("Reset", color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
@@ -681,7 +683,7 @@ fun Home(
                     Text("Cancel")
                 }
             },
-            containerColor = Color(0xFF2C2C2C)
+            containerColor = MaterialTheme.colorScheme.surface
         )
     }
 
@@ -691,7 +693,7 @@ fun Home(
 
         AlertDialog(
             onDismissRequest = { showAddDialog = false },
-            title = { Text(stringResource(id = R.string.add_student), color = Color.White) }, // Assumes this string exists
+            title = { Text(stringResource(id = R.string.add_student), color = MaterialTheme.colorScheme.onBackground) }, // Assumes this string exists
             text = {
                 Column {
                     OutlinedTextField(
@@ -715,7 +717,7 @@ fun Home(
                 SmallActionCard(
                     text = stringResource(id = R.string.add),
                     icon = Icons.Default.Check,
-                    color = Color(0xFF468A9A),
+                    color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.width(100.dp)
                 ) {
                     if (enrollInput.isNotBlank() && nameInput.isNotBlank()) {
@@ -730,13 +732,13 @@ fun Home(
                 SmallActionCard (
                     text = stringResource(id = R.string.cancel), // Assumes this string exists
                     icon = Icons.Default.Close,
-                    color = Color(0xFF541212),
+                    color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.width(100.dp)
                 ) {
                     showAddDialog = false
                 }
             },
-            containerColor = Color(0xFF2C2C2C)
+            containerColor = MaterialTheme.colorScheme.surface
         )
 
     }
@@ -760,13 +762,13 @@ fun AttendanceTable(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFF3A3A3A)
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
                 ),
                 elevation = CardDefaults.cardElevation(4.dp)
             ) {
                 Text(
                     text = stringResource(id = R.string.no_faces_recognized),
-                    color = Color.Gray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier
                         .padding(16.dp)
                         .align(Alignment.CenterHorizontally),
@@ -783,7 +785,7 @@ fun AttendanceTable(
                         .padding(vertical = 4.dp),
                     shape = RoundedCornerShape(12.dp),
                     elevation = CardDefaults.cardElevation(4.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFF3A3A3A))
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                 ) {
                     Row(
                         modifier = Modifier
@@ -801,13 +803,13 @@ fun AttendanceTable(
                             Text(
                                 text = stringResource(id = R.string.student_name, student.name ?: stringResource(id = R.string.unknown)),
                                 style = MaterialTheme.typography.bodyLarge,
-                                color = Color.White
+                                color = MaterialTheme.colorScheme.onBackground
                             )
                             // Roll no
                             Text(
                                 text = stringResource(id = R.string.student_roll_no, student.roll_no),
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = Color.LightGray
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
 
@@ -816,7 +818,7 @@ fun AttendanceTable(
                                 Icon(
                                     imageVector = Icons.Default.MoreVert,
                                     contentDescription = stringResource(id = R.string.more_options),
-                                    tint = Color.White
+                                    tint = MaterialTheme.colorScheme.onBackground
                                 )
                             }
                             DropdownMenu(
@@ -862,7 +864,7 @@ fun ActionCard(
             .clickable(enabled = enabled, onClick = onClick),
         shape = RoundedCornerShape(25.dp),
         elevation = CardDefaults.cardElevation(8.dp),
-        colors = CardDefaults.cardColors(containerColor = if (enabled) color else Color.DarkGray)
+        colors = CardDefaults.cardColors(containerColor = if (enabled) color else MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Row(
             modifier = Modifier
@@ -871,9 +873,9 @@ fun ActionCard(
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(icon, contentDescription = text, tint = Color.Black)
+            Icon(icon, contentDescription = text, tint = MaterialTheme.colorScheme.onSurface)
             Spacer(Modifier.width(8.dp))
-            Text(text, color = Color.Black, style = MaterialTheme.typography.titleMedium)
+            Text(text, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium)
         }
     }
 }
@@ -899,7 +901,7 @@ fun ImagePickerContainer(
                     .fillMaxWidth()
                     .height(200.dp)
                     .clip(RoundedCornerShape(16.dp))
-                    .background(Color(0xFF2C2C2C))
+                    .background(MaterialTheme.colorScheme.surface)
                     .clickable(enable) { onAddUpload() },
                 contentAlignment = Alignment.Center
             ) {
@@ -907,22 +909,22 @@ fun ImagePickerContainer(
                     Icon(
                         imageVector = Icons.Default.Image,
                         contentDescription = null,
-                        tint = Color.Gray,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(48.dp)
                     )
                     Spacer(Modifier.height(8.dp))
-                    Text(stringResource(id = R.string.tap_to_upload_or_capture), color = Color.Gray)
+                    Text(stringResource(id = R.string.tap_to_upload_or_capture), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(Modifier.height(12.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         OutlinedButton(onClick = onAddUpload) {
-                            Icon(Icons.Default.PhotoLibrary, null, tint = Color.White)
+                            Icon(Icons.Default.PhotoLibrary, null, tint = MaterialTheme.colorScheme.onBackground)
                             Spacer(Modifier.width(6.dp))
-                            Text(stringResource(id = R.string.upload), color = Color.White)
+                            Text(stringResource(id = R.string.upload), color = MaterialTheme.colorScheme.onBackground)
                         }
                         OutlinedButton(onClick = onAddCapture) {
-                            Icon(Icons.Default.PhotoCamera, null, tint = Color.White)
+                            Icon(Icons.Default.PhotoCamera, null, tint = MaterialTheme.colorScheme.onBackground)
                             Spacer(Modifier.width(6.dp))
-                            Text(stringResource(id = R.string.capture), color = Color.White)
+                            Text(stringResource(id = R.string.capture), color = MaterialTheme.colorScheme.onBackground)
                         }
                     }
                 }
@@ -941,13 +943,13 @@ fun ImagePickerContainer(
                                 .fillMaxHeight()
                                 .aspectRatio(1f)
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(Color(0xFF2C2C2C))
+                                .background(MaterialTheme.colorScheme.surface)
                                 .clickable(enable) {
                                     onAddCapture()
                                 },
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(Icons.Default.PhotoCamera, contentDescription = stringResource(id = R.string.add), tint = Color.White)
+                            Icon(Icons.Default.PhotoCamera, contentDescription = stringResource(id = R.string.add), tint = MaterialTheme.colorScheme.onBackground)
                         }
 
                     }
@@ -967,9 +969,9 @@ fun ImagePickerContainer(
                                 onClick = { onRemove(uri) },
                                 modifier = Modifier
                                     .align(Alignment.TopEnd)
-                                    .background(Color.Black.copy(alpha = 0.6f), CircleShape)
+                                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f), CircleShape)
                             ) {
-                                Icon(Icons.Default.Close, contentDescription = stringResource(id = R.string.remove), tint = Color.White)
+                                Icon(Icons.Default.Close, contentDescription = stringResource(id = R.string.remove), tint = MaterialTheme.colorScheme.onBackground)
                             }
                         }
                     }
@@ -982,7 +984,7 @@ fun ImagePickerContainer(
                         .fillMaxHeight()
                         .background(
                             Brush.horizontalGradient(
-                                listOf(Color.Transparent, Color(0x6DDDE0E0))
+                                listOf(Color.Transparent, MaterialTheme.colorScheme.surface.copy(alpha = 0.7f))
                             )
                         )
                 )
@@ -1012,9 +1014,9 @@ fun ImagePickerContainer(
                                 onClick = { onRemove(uri) },
                                 modifier = Modifier
                                     .align(Alignment.TopEnd)
-                                    .background(Color.Black.copy(alpha = 0.6f), CircleShape)
+                                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f), CircleShape)
                             ) {
-                                Icon(Icons.Default.Close, contentDescription = stringResource(id = R.string.remove), tint = Color.White)
+                                Icon(Icons.Default.Close, contentDescription = stringResource(id = R.string.remove), tint = MaterialTheme.colorScheme.onBackground)
                             }
                         }
                     }
@@ -1063,13 +1065,13 @@ fun SmallActionCard(
             Icon(
                 imageVector = icon,
                 contentDescription = text,
-                tint = Color.Black,
+                tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.size(16.dp)
             )
             Spacer(Modifier.width(6.dp))
             Text(
                 text,
-                color = Color.Black,
+                color = MaterialTheme.colorScheme.onSurface,
                 style = MaterialTheme.typography.bodyMedium
             )
         }
@@ -1093,10 +1095,10 @@ fun DebugImageCard(label: String, base64: String) {
                 contentScale = ContentScale.Crop
             )
             Spacer(Modifier.height(4.dp))
-            Text(label, color = Color.White, style = MaterialTheme.typography.bodySmall)
+            Text(label, color = MaterialTheme.colorScheme.onBackground, style = MaterialTheme.typography.bodySmall)
         }
     } else {
-        Text(stringResource(id = R.string.failed_to_load_image, label), color = Color.Red)
+        Text(stringResource(id = R.string.failed_to_load_image, label), color = MaterialTheme.colorScheme.error)
     }
 }
 

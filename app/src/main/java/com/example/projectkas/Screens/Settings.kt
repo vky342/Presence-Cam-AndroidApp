@@ -81,12 +81,16 @@ import com.example.projectkas.ViewModel.AuthState
 import com.example.projectkas.ViewModel.AuthViewModel
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.projectkas.Module.ThemeMode
 import com.example.projectkas.Network.ClassUi
 import com.example.projectkas.Network.RetrofitInstance.api
 import com.example.projectkas.R
 import com.example.projectkas.ViewModel.SettingsViewModel
 import kotlinx.coroutines.launch
 import java.util.Locale
+
+
+
 
 @SuppressLint("UnrememberedGetBackStackEntry")
 @Composable
@@ -97,7 +101,7 @@ fun Settings(onLogout : () -> Unit,
 
     val parentEntry = remember(navController) { navController.getBackStackEntry("main") }
     val authViewModel: AuthViewModel = hiltViewModel(parentEntry)
-
+    val currentTheme by authViewModel.currentTheme.collectAsState()
     val authState = authViewModel.authState.observeAsState()
     val currentUserEmail = authViewModel.auth.currentUser?.email ?: ""
 
@@ -177,7 +181,7 @@ fun Settings(onLogout : () -> Unit,
     Column(
         Modifier
             .fillMaxSize()
-            .background(color = Color(24, 23, 23))
+            .background(color = MaterialTheme.colorScheme.background)
             .padding(top = 4.dp, start = 16.dp, end = 16.dp, bottom = 4.dp)
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -186,14 +190,14 @@ fun Settings(onLogout : () -> Unit,
         Text(
             text = stringResource(id = R.string.settings),
             textAlign = TextAlign.Center,
-            color = Color.White,
+            color = MaterialTheme.colorScheme.onBackground,
             style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
         )
 
         Spacer(modifier = Modifier.height(4.dp))
 
         Divider(
-            color = Color(0xFF468A9A), // teal accent
+            color = MaterialTheme.colorScheme.primary, // teal accent
             thickness = 2.dp,
             modifier = Modifier.width(180.dp)
         )
@@ -205,7 +209,7 @@ fun Settings(onLogout : () -> Unit,
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
             elevation = CardDefaults.cardElevation(8.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C2C))
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
             Row(
                 modifier = Modifier
@@ -217,12 +221,12 @@ fun Settings(onLogout : () -> Unit,
                     imageVector = Icons.Default.AccountCircle,
                     contentDescription = "Profile",
                     modifier = Modifier.size(40.dp),
-                    tint = Color.White
+                    tint = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
-                    Text(stringResource(id = R.string.logged_in_as), color = Color.Gray, style = MaterialTheme.typography.bodySmall)
-                    Text(currentUserEmail, color = Color.White, style = MaterialTheme.typography.bodyLarge)
+                    Text(stringResource(id = R.string.logged_in_as), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+                    Text(currentUserEmail, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.bodyLarge)
                 }
             }
         }
@@ -231,6 +235,11 @@ fun Settings(onLogout : () -> Unit,
             currentLangFromVm = currentLang,
             onSetLanguage = { code -> viewModel.setLanguage(code) },
             onLocaleApplied = onLocaleApplied
+        )
+
+        ThemeSelector(
+            currentTheme = currentTheme,
+            onThemeChange = { authViewModel.setTheme(it) }
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -244,15 +253,15 @@ fun Settings(onLogout : () -> Unit,
         ) {
             Text(
                 text = stringResource(id = R.string.debug_mode),
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onBackground,
                 style = MaterialTheme.typography.bodyLarge
             )
             Switch(
                 checked = debugMode,
                 onCheckedChange = { authViewModel.setDebugMode(it) },
                 colors = SwitchDefaults.colors(
-                    checkedThumbColor = Color(0xFF468A9A),
-                    uncheckedThumbColor = Color.Gray
+                    checkedThumbColor = MaterialTheme.colorScheme.primary,
+                    uncheckedThumbColor = MaterialTheme.colorScheme.outline
                 )
             )
         }
@@ -271,10 +280,10 @@ fun Settings(onLogout : () -> Unit,
 
         // Classes table
         if (isLoading) {
-            CircularProgressIndicator(color = Color.White)
+            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
         } else if (errorMessage != null) {
             Log.e("ERROR", "" + errorMessage)
-            Text("Server Error - unable to connect", color = Color.Red)
+            Text("Server Error - unable to connect", color =MaterialTheme.colorScheme.error)
         } else {
             if (filteredClasses.isNotEmpty()) {
                 Card(
@@ -283,19 +292,19 @@ fun Settings(onLogout : () -> Unit,
                         .height(400.dp),
                     shape = RoundedCornerShape(12.dp),
                     elevation = CardDefaults.cardElevation(4.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C2C))
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
                     Column(Modifier.padding(12.dp)) {
                         Text(
                             text = "Classes - ${filteredClasses.size}",
-                            color = Color.White,
+                            color = MaterialTheme.colorScheme.onSurface,
                             style = MaterialTheme.typography.titleMedium,
                             modifier = Modifier
                                 .align(Alignment.CenterHorizontally)
                                 .padding(bottom = 8.dp)
                         )
                         Divider(
-                            color = Color.Gray,
+                            color = MaterialTheme.colorScheme.outline,
                             thickness = 1.dp
                         )
 
@@ -319,7 +328,7 @@ fun Settings(onLogout : () -> Unit,
                                     }
                                 )
                                 Divider(
-                                    color = Color.DarkGray,
+                                    color = MaterialTheme.colorScheme.outline,
                                     thickness = 0.5.dp
                                 )
                             }
@@ -328,7 +337,7 @@ fun Settings(onLogout : () -> Unit,
                     }
                 }
             } else {
-                Text("No class found", color = Color.Gray)
+                Text("No class found", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
 
@@ -343,7 +352,7 @@ fun Settings(onLogout : () -> Unit,
                 .clickable { authViewModel.signout() },
             shape = RoundedCornerShape(25.dp),
             elevation = CardDefaults.cardElevation(8.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF8B1A1A)) // deep red
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.error) // deep red
         ) {
             Row(
                 modifier = Modifier
@@ -355,13 +364,13 @@ fun Settings(onLogout : () -> Unit,
                 Icon(
                     imageVector = Icons.Default.Logout,
                     contentDescription = "Sign out",
-                    tint = Color.White
+                    tint = MaterialTheme.colorScheme.onError
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     stringResource(id = R.string.sign_out),
                     style = MaterialTheme.typography.titleMedium,
-                    color = Color.White
+                    color = MaterialTheme.colorScheme.onError
                 )
             }
         }
@@ -374,7 +383,7 @@ fun Settings(onLogout : () -> Unit,
                 editedClassName = ""
             },
             title = {
-                Text("Edit Class", color = Color.White)
+                Text("Edit Class", color = MaterialTheme.colorScheme.onSurface)
             },
             text = {
                 Column {
@@ -432,7 +441,7 @@ fun Settings(onLogout : () -> Unit,
                     Text("Cancel")
                 }
             },
-            containerColor = Color(0xFF2C2C2C)
+            containerColor = MaterialTheme.colorScheme.surface
         )
     }
 
@@ -442,12 +451,12 @@ fun Settings(onLogout : () -> Unit,
                 showDeleteClassDialog = false
             },
             title = {
-                Text("Delete Class", color = Color.White)
+                Text("Delete Class", color = MaterialTheme.colorScheme.onSurface)
             },
             text = {
                 Text(
                     text = "Are you sure you want to delete '${selectedClass!!.name}'?\n\nThis will remove all students in this class.",
-                    color = Color.LightGray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             },
             confirmButton = {
@@ -478,7 +487,7 @@ fun Settings(onLogout : () -> Unit,
                         }
                     }
                 ) {
-                    Text("Delete", color = Color.Red)
+                    Text("Delete", color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
@@ -490,7 +499,7 @@ fun Settings(onLogout : () -> Unit,
                     Text("Cancel")
                 }
             },
-            containerColor = Color(0xFF2C2C2C)
+            containerColor = MaterialTheme.colorScheme.surface
         )
     }
 
@@ -516,7 +525,7 @@ fun ClassRow(
         // Class name
         Text(
             text = classItem.name,
-            color = Color.White,
+            color = MaterialTheme.colorScheme.onSurface,
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.weight(1f)
         )
@@ -527,7 +536,7 @@ fun ClassRow(
                 Icon(
                     imageVector = Icons.Default.MoreVert,
                     contentDescription = "More options",
-                    tint = Color.White
+                    tint = MaterialTheme.colorScheme.onSurface
                 )
             }
 
@@ -545,7 +554,7 @@ fun ClassRow(
                 )
 
                 DropdownMenuItem(
-                    text = { Text("Delete", color = Color.Red) },
+                    text = { Text("Delete", color = MaterialTheme.colorScheme.error) },
                     onClick = {
                         menuExpanded = false
                         onDelete()
@@ -553,7 +562,7 @@ fun ClassRow(
                 )
 
                 DropdownMenuItem(
-                    text = { Text("Students", color = Color.White) },
+                    text = { Text("Students")},
                     onClick = {
                         menuExpanded = false
                         onStudent()
@@ -563,6 +572,83 @@ fun ClassRow(
         }
     }
 }
+
+
+
+@Composable
+fun ThemeSelector(
+    currentTheme: ThemeMode,
+    onThemeChange: (ThemeMode) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "Theme",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = when(currentTheme) {
+                            ThemeMode.LIGHT -> "Light"
+                            ThemeMode.DARK -> "Dark"
+                            ThemeMode.SYSTEM -> "System Default"
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                OutlinedButton(onClick = { expanded = true }) {
+                    Text(when(currentTheme) {
+                        ThemeMode.LIGHT -> "☀️"
+                        ThemeMode.DARK -> "🌙"
+                        ThemeMode.SYSTEM -> "⚙️"
+                    })
+                }
+            }
+
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                listOf(
+                    ThemeMode.LIGHT to "Light Mode",
+                    ThemeMode.DARK to "Dark Mode",
+                    ThemeMode.SYSTEM to "System Default"
+                ).forEach { (mode, label) ->
+                    DropdownMenuItem(
+                        text = { Text(label) },
+                        onClick = {
+                            onThemeChange(mode)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+
+
+
 
 
 @Composable
@@ -579,12 +665,12 @@ fun StudentRow(student: Student, onEdit: () -> Unit, onDelete: () -> Unit) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = student.name,
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onSurface,
                 style = MaterialTheme.typography.bodyLarge
             )
             Text(
                 text = student.roll_no,
-                color = Color.Gray,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodyMedium
             )
         }
@@ -594,7 +680,7 @@ fun StudentRow(student: Student, onEdit: () -> Unit, onDelete: () -> Unit) {
                 Icon(
                     imageVector = Icons.Default.MoreVert,
                     contentDescription = stringResource(id = R.string.more_options),
-                    tint = Color.White
+                    tint = MaterialTheme.colorScheme.onSurface
                 )
             }
             DropdownMenu(
@@ -701,17 +787,14 @@ fun SearchBarWithHistory(
                         }
                     }),
                     colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color(24, 23, 23),
-                        unfocusedContainerColor = Color(24, 23, 23),
-
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.LightGray,
-
-                        focusedLabelColor = Color.White,
-                        unfocusedLabelColor = Color.Gray,
-
-                        focusedIndicatorColor = Color.White,
-                        unfocusedIndicatorColor = Color.Gray
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        focusedLabelColor = MaterialTheme.colorScheme.primary,
+                        unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                        unfocusedIndicatorColor = MaterialTheme.colorScheme.outline
                     ),
                     shape = RoundedCornerShape(10.dp)
                 )
@@ -796,17 +879,14 @@ fun SimpleSearchBar(
             .heightIn(min = 52.dp),
         shape = RoundedCornerShape(10.dp),
         colors = TextFieldDefaults.colors(
-            focusedContainerColor = Color(24, 23, 23),
-            unfocusedContainerColor = Color(24, 23, 23),
-
-            focusedTextColor = Color.White,
-            unfocusedTextColor = Color.LightGray,
-
-            focusedLabelColor = Color.White,
-            unfocusedLabelColor = Color.Gray,
-
-            focusedIndicatorColor = Color.White,
-            unfocusedIndicatorColor = Color.Gray
+            focusedContainerColor = MaterialTheme.colorScheme.surface,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+            unfocusedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            focusedLabelColor = MaterialTheme.colorScheme.primary,
+            unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+            unfocusedIndicatorColor = MaterialTheme.colorScheme.outline
         )
     )
 }

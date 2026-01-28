@@ -180,7 +180,7 @@ fun Register(navController: NavController, authViewModel: AuthViewModel = hiltVi
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(color = Color(24, 23, 23))
+            .background(color = MaterialTheme.colorScheme.background)
             .padding(top = 4.dp, start = 16.dp, end = 16.dp, bottom = 4.dp)
             .verticalScroll(rememberScrollState())
         ,
@@ -189,14 +189,14 @@ fun Register(navController: NavController, authViewModel: AuthViewModel = hiltVi
         Text(
             text = stringResource(id = R.string.student_registration),
             textAlign = TextAlign.Center,
-            color = Color.White,
+            color = MaterialTheme.colorScheme.onBackground,
             style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
         )
 
         Spacer(modifier = Modifier.height(4.dp))
 
         Divider(
-            color = Color(0xFF468A9A), // teal accent
+            color = MaterialTheme.colorScheme.primary,
             thickness = 2.dp,
             modifier = Modifier.width(180.dp)
         )
@@ -225,14 +225,14 @@ fun Register(navController: NavController, authViewModel: AuthViewModel = hiltVi
                     focusManager.moveFocus(FocusDirection.Down)
                 }),
                 colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color(24, 23, 23),
-                    unfocusedContainerColor = Color(24, 23, 23),
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.LightGray,
-                    focusedLabelColor = Color.White,
-                    unfocusedLabelColor = Color.Gray,
-                    focusedIndicatorColor = Color.White,
-                    unfocusedIndicatorColor = Color.Gray
+                    focusedContainerColor = MaterialTheme.colorScheme.background,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.background,
+                    focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    focusedLabelColor = MaterialTheme.colorScheme.onBackground,
+                    unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    focusedIndicatorColor = MaterialTheme.colorScheme.onBackground,
+                    unfocusedIndicatorColor = MaterialTheme.colorScheme.outline
                 )
             )
 
@@ -272,21 +272,21 @@ fun Register(navController: NavController, authViewModel: AuthViewModel = hiltVi
             value = Rollno,
             onValueChange = { Rollno = it },
             label = { Text(stringResource(id = R.string.roll_no)) },
-            textStyle = TextStyle(fontSize = 18.sp, color = Color.White),
+            textStyle = TextStyle(fontSize = 18.sp, color = MaterialTheme.colorScheme.onBackground),
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
             colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color(24, 23, 23),
-                unfocusedContainerColor = Color(24, 23, 23),
+                focusedContainerColor = MaterialTheme.colorScheme.background,
+                unfocusedContainerColor = MaterialTheme.colorScheme.background,
 
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.LightGray,
+                focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                unfocusedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
 
-                focusedLabelColor = Color.White,
-                unfocusedLabelColor = Color.Gray,
+                focusedLabelColor = MaterialTheme.colorScheme.onBackground,
+                unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
 
-                focusedIndicatorColor = Color.White,
-                unfocusedIndicatorColor = Color.Gray
+                focusedIndicatorColor = MaterialTheme.colorScheme.onBackground,
+                unfocusedIndicatorColor = MaterialTheme.colorScheme.outline
             ),
             keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next),
             keyboardActions = KeyboardActions(onNext = {
@@ -297,21 +297,21 @@ fun Register(navController: NavController, authViewModel: AuthViewModel = hiltVi
         OutlinedTextField(
             value = StudentName,
             onValueChange = { StudentName = it },
-            label = { Text(stringResource(id = R.string.name)) },            textStyle = TextStyle(fontSize = 18.sp, color = Color.White),
+            label = { Text(stringResource(id = R.string.name)) },            textStyle = TextStyle(fontSize = 18.sp, color = MaterialTheme.colorScheme.onBackground),
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
             colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color(24, 23, 23),
-                unfocusedContainerColor = Color(24, 23, 23),
+                focusedContainerColor = MaterialTheme.colorScheme.background,
+                unfocusedContainerColor = MaterialTheme.colorScheme.background,
 
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.LightGray,
+                focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                unfocusedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
 
-                focusedLabelColor = Color.White,
-                unfocusedLabelColor = Color.Gray,
+                focusedLabelColor = MaterialTheme.colorScheme.onBackground,
+                unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
 
-                focusedIndicatorColor = Color.White,
-                unfocusedIndicatorColor = Color.Gray
+                focusedIndicatorColor = MaterialTheme.colorScheme.onBackground,
+                unfocusedIndicatorColor = MaterialTheme.colorScheme.outline
             ),
             keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = {
@@ -400,9 +400,9 @@ fun Register(navController: NavController, authViewModel: AuthViewModel = hiltVi
             elevation = CardDefaults.cardElevation(8.dp),
             colors = CardDefaults.cardColors(
                 containerColor = when {
-                    isLoading -> Color(0xFF3A3A3A) // dimmed while loading
-                    selectedUris.isNotEmpty() && Rollno.isNotBlank() && StudentName.isNotBlank() -> Color(0xFF468A9A) // teal active
-                    else -> Color(0xFF541212) // red inactive
+                    isLoading -> MaterialTheme.colorScheme.surfaceVariant // dimmed while loading
+                    selectedUris.isNotEmpty() && Rollno.isNotBlank() && StudentName.isNotBlank() -> MaterialTheme.colorScheme.primary // teal active
+                    else -> MaterialTheme.colorScheme.error // red inactive
                 }
             )
         ) {
@@ -415,7 +415,7 @@ fun Register(navController: NavController, authViewModel: AuthViewModel = hiltVi
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onBackground,
                         strokeWidth = 2.dp,
                         modifier = Modifier.size(20.dp)
                     )
@@ -423,19 +423,19 @@ fun Register(navController: NavController, authViewModel: AuthViewModel = hiltVi
                     Text(
                         stringResource(id = R.string.registering),
                         style = MaterialTheme.typography.titleMedium,
-                        color = Color.White
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                 } else {
                     Icon(
                         imageVector = Icons.Default.PersonAdd,
                         contentDescription = "Register",
-                        tint = Color.Black
+                        tint = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         stringResource(id = R.string.register),
                         style = MaterialTheme.typography.titleMedium,
-                        color = Color.Black
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
             }
@@ -522,7 +522,7 @@ fun MultiImagePickerContainer(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(Color(0xFF2C2C2C))
+            .background(MaterialTheme.colorScheme.surface)
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -532,23 +532,23 @@ fun MultiImagePickerContainer(
                 Icon(
                     imageVector = Icons.Default.Image,
                     contentDescription = "Placeholder",
-                    tint = Color.Gray,
+                    tint =MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(48.dp)
                 )
                 Spacer(Modifier.height(8.dp))
-                Text(stringResource(id = R.string.add_photos), color = Color.Gray)
+                Text(stringResource(id = R.string.add_photos), color = MaterialTheme.colorScheme.onSurfaceVariant)
 
                 Spacer(Modifier.height(12.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     OutlinedButton(onClick = onUpload) {
-                        Icon(Icons.Default.PhotoLibrary, null, tint = Color.White)
+                        Icon(Icons.Default.PhotoLibrary, null, tint = MaterialTheme.colorScheme.onBackground)
                         Spacer(Modifier.width(6.dp))
-                        Text(stringResource(id = R.string.upload), color = Color.White)
+                        Text(stringResource(id = R.string.upload), color = MaterialTheme.colorScheme.onBackground)
                     }
                     OutlinedButton(onClick = onCapture) {
-                        Icon(Icons.Default.PhotoCamera, null, tint = Color.White)
+                        Icon(Icons.Default.PhotoCamera, null, tint = MaterialTheme.colorScheme.onBackground)
                         Spacer(Modifier.width(6.dp))
-                        Text(stringResource(id = R.string.capture), color = Color.White)
+                        Text(stringResource(id = R.string.capture), color = MaterialTheme.colorScheme.onBackground)
                     }
                 }
             }
@@ -576,10 +576,10 @@ fun MultiImagePickerContainer(
                             onClick = { onClear(uri) },
                             modifier = Modifier
                                 .align(Alignment.TopEnd)
-                                .background(Color.Black.copy(alpha = 0.6f), CircleShape)
+                                .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f), CircleShape)
                                 .size(20.dp)
                         ) {
-                            Icon(Icons.Default.Close, contentDescription = stringResource(id = R.string.remove), tint = Color.White, modifier = Modifier.size(14.dp))
+                            Icon(Icons.Default.Close, contentDescription = stringResource(id = R.string.remove), tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(14.dp))
                         }
                     }
                 }
@@ -590,13 +590,13 @@ fun MultiImagePickerContainer(
                         modifier = Modifier
                             .size(90.dp)
                             .clip(RoundedCornerShape(12.dp))
-                            .background(Color.DarkGray.copy(alpha = 0.4f))
+                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
                             .clickable { showPickerDialog = true }, // 👈 show dialog
                         contentAlignment = Alignment.Center
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(Icons.Default.AddAPhoto, contentDescription = "Add", tint = Color.Gray, modifier = Modifier.size(28.dp))
-                            Text(stringResource(id = R.string.add), color = Color.Gray, style = MaterialTheme.typography.labelSmall)
+                            Icon(Icons.Default.AddAPhoto, contentDescription = "Add", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(28.dp))
+                            Text(stringResource(id = R.string.add), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
                         }
                     }
                 }
@@ -607,7 +607,7 @@ fun MultiImagePickerContainer(
             // Progress indicator → e.g. "2/3 selected"
             Text(
                 text = stringResource(id = R.string.selected_of_3, selectedUris.size),
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onBackground,
                 style = MaterialTheme.typography.bodyMedium
             )
 
@@ -619,7 +619,7 @@ fun MultiImagePickerContainer(
         Text(
             text = stringResource(id = R.string.note),
             style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-            color = Color(0xFFDA5555) // themed red
+            color = MaterialTheme.colorScheme.error // themed red
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -629,7 +629,7 @@ fun MultiImagePickerContainer(
             text = stringResource(id = R.string.register_note),
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.bodySmall.copy(fontStyle = FontStyle.Italic),
-            color = Color(0xFFB0B0B0) // softer gray for readability
+            color = MaterialTheme.colorScheme.onSurfaceVariant // softer gray for readability
         )
     }
 
