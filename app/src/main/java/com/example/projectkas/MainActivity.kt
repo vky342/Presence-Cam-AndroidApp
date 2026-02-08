@@ -47,6 +47,7 @@ import java.util.Locale
 import androidx.compose.runtime.collectAsState
 import com.example.projectkas.Module.ThemeMode
 import com.example.projectkas.ViewModel.AuthViewModel
+import com.example.projectkas.ui.theme.navBarIndicatorIconColor
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -118,7 +119,7 @@ fun KasApp(authViewModel: AuthViewModel = hiltViewModel()) {
                                 // ✅ FIXED: All navigation colors now use theme
                                 colors = NavigationBarItemDefaults.colors(
                                     selectedTextColor = MaterialTheme.colorScheme.onSurface,
-                                    selectedIconColor = MaterialTheme.colorScheme.primary,
+                                    selectedIconColor = navBarIndicatorIconColor,
                                     unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
                                     indicatorColor = MaterialTheme.colorScheme.primaryContainer,
                                     unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant

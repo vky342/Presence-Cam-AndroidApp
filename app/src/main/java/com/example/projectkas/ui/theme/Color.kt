@@ -2,9 +2,12 @@ package com.example.projectkas.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
+val navBarIndicatorIconColor = Color(0xFFF8F8F8)
+
 // Dark Theme Colors
 object DarkColors {
     val Primary = Color(0xFF60A5FA)
+
     val PrimaryVariant = Color(0xFF3B82F6)
     val Secondary = Color(0xFF34D399)
     val SecondaryVariant = Color(0xFF10B981)

@@ -191,6 +191,13 @@ fun Home(
         }
     )
 
+
+    // Create filename format for PDF
+    val fileNameDateFormat = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
+    val fileDateTime = fileNameDateFormat.format(Date())
+    val className = selectedClass?.name ?: "Unknown"
+    val pdfFileName = "${className}_${fileDateTime}.pdf"
+
     val createDocumentLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/pdf")
     ) { uri: Uri? ->
@@ -218,13 +225,21 @@ fun Home(
 
                 paint.isFakeBoldText = true
 
+                // Draw "Attendance List" on the left
                 canvas.drawText(context.getString(R.string.attendance_list), startX, y, paint)
 
+                // Draw date on the right
                 val dateX = pageInfo.pageWidth - paint.measureText(currentDateTime) - 50f
                 canvas.drawText(currentDateTime, dateX, y, paint)
 
+                y += 30f
+
+                // Draw class name
+                canvas.drawText("Class: $className", startX, y, paint)
+
                 y += 40f
 
+                // Draw table headers
                 paint.textSize = 14f
                 canvas.drawText(context.getString(R.string.roll_no), col1X, y, paint)
                 canvas.drawText(context.getString(R.string.name), col2X, y, paint)
@@ -232,6 +247,7 @@ fun Home(
                 canvas.drawLine(col1X, y + 5f, col1X + tableWidth, y + 5f, paint)
                 y += rowHeight
 
+                // Draw student data
                 recognizedList.sortedBy { it.roll_no }.forEach { student ->
                     canvas.drawText(student.roll_no, col1X, y, normalPaint)
                     canvas.drawText(student.name ?: context.getString(R.string.unknown), col2X, y, normalPaint)
@@ -239,11 +255,9 @@ fun Home(
                 }
 
                 pdfDocument.finishPage(page)
-
                 context.contentResolver.openOutputStream(it)?.use { outputStream ->
                     pdfDocument.writeTo(outputStream)
                 }
-
                 pdfDocument.close()
                 Toast.makeText(context, context.getString(R.string.pdf_saved_successfully), Toast.LENGTH_LONG).show()
             } catch (e: Exception) {
@@ -251,6 +265,7 @@ fun Home(
             }
         }
     }
+
 
 
     LaunchedEffect(currentUserEmail) {
@@ -402,7 +417,7 @@ fun Home(
                 color = if (recognizedList.isEmpty() && apiResponse == null)
                     MaterialTheme.colorScheme.primary
                     else MaterialTheme.colorScheme.error,
-                enabled = selectedPhotoUris.isNotEmpty() || recognizedList.isNotEmpty()
+                enabled = selectedClass != null
             ) {
                 if (apiResponse == null && recognizedList.isEmpty() && selectedClass != null) {
                     coroutineScope.launch {
@@ -416,7 +431,7 @@ fun Home(
                                 Log.e("DBG", "classId string = ${selectedClass.id}")
 
                                 val classIdBody =
-                                    selectedClass!!.id.toRequestBody("text/plain".toMediaType())
+                                    selectedClass.id.toRequestBody("text/plain".toMediaType())
 
                                 val response = if (debugMode) {
                                     RetrofitInstance.api.debugRecognize(
@@ -548,7 +563,7 @@ fun Home(
                         icon = Icons.Default.PictureAsPdf,
                         color = MaterialTheme.colorScheme.secondary,
                         modifier = Modifier.weight(1f)
-                    ) { createDocumentLauncher.launch("attendance_list.pdf") }
+                    ) { createDocumentLauncher.launch(pdfFileName) }
                 }
             }
         }
