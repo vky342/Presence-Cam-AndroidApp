@@ -143,6 +143,7 @@ interface ApiService {
     @POST("debugRecognize")
     suspend fun debugRecognize(
         @Part files: List<MultipartBody.Part>,
+        @Part("classId") classId: RequestBody,
         @Header("userEmail") email: String
     ): Response<RecognizeResponse>?
 
@@ -269,7 +270,7 @@ object RetrofitInstance {
 
     val api: ApiService by lazy {
         Retrofit.Builder()
-            .baseUrl("http://10.13.71.38:8000/")
+            .baseUrl("http://10.0.2.2:8000/")
             //.baseUrl("http://X.Y.Z.K:80/api/")
             .client(okHttpClient)//
             .addConverterFactory(GsonConverterFactory.create())
