@@ -124,7 +124,7 @@ fun Register(navController: NavController, authViewModel: AuthViewModel = hiltVi
     LaunchedEffect(currentUserEmail) {
         try {
             isClassLoading = true
-            val res = RetrofitInstance.api.getClasses(
+            val res = RetrofitInstance.getApi().getClasses(
                 userEmail = currentUserEmail
             )
             classes = res.classes
@@ -367,7 +367,7 @@ fun Register(navController: NavController, authViewModel: AuthViewModel = hiltVi
                             }
 
 
-                                val response = RetrofitInstance.api.register(
+                                val response = RetrofitInstance.getApi().register(
                                 imageParts,
                                     Rollno = enrollPart,
                                     studentName = studentPart,
@@ -474,7 +474,7 @@ fun Register(navController: NavController, authViewModel: AuthViewModel = hiltVi
 
                             coroutineScope.launch {
                                 try {
-                                    val created = RetrofitInstance.api.createClass(
+                                    val created = RetrofitInstance.getApi().createClass(
                                         userEmail = currentUserEmail,
                                         name = newClassName.trim()
                                     )

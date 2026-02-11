@@ -5,7 +5,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.projectkas.Network.RetrofitInstance.api
+import com.example.projectkas.Network.RetrofitInstance.getApi
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -86,7 +86,7 @@ class AuthViewModel @Inject constructor( private val themeRepository: ThemeRepos
                         withContext(NonCancellable) {
                             try {
                                 val emailPart = email.toRequestBody("text/plain".toMediaTypeOrNull())
-                                val response = api.signup(emailPart)
+                                val response = getApi().signup(emailPart)
 //                            val response = api.healthCheck()
                                 Log.d("AuthVM", "Server signup response: ${response.body()?.message}")
                             } catch (e: Exception) {

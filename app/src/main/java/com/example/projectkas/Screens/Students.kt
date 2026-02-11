@@ -43,7 +43,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.example.projectkas.Network.RetrofitInstance.api
+import com.example.projectkas.Network.RetrofitInstance
+import com.example.projectkas.Network.RetrofitInstance.getApi
 import com.example.projectkas.Network.Student
 import com.example.projectkas.R
 import com.example.projectkas.Screen
@@ -77,7 +78,7 @@ fun StudentsList(navController: NavController, classID: String?,authViewModel: A
             is AuthState.Authenticated -> {
                 isLoading = true
                 try {
-                    val response = api.listStudents(classId = classID, currentUserEmail)
+                    val response = RetrofitInstance.getApi().listStudents(classId = classID, currentUserEmail)
                     if (response.isSuccessful) {
                         students = response.body()?.students ?: emptyList()
                         Log.d("debug","" + students.toString())
@@ -207,7 +208,7 @@ fun StudentsList(navController: NavController, classID: String?,authViewModel: A
                         coroutineScope.launch {
                             isLoadingDelete = true
                             try {
-                                val response = api.deleteStudentById(
+                                val response = RetrofitInstance.getApi().deleteStudentById(
                                     studentId = selectedStudent.id,
                                     email = currentUserEmail,
                                     classID = classID
@@ -227,7 +228,7 @@ fun StudentsList(navController: NavController, classID: String?,authViewModel: A
                             }
 
                             try {
-                                val response = api.listStudents(classId = classID, currentUserEmail)
+                                val response = RetrofitInstance.getApi().listStudents(classId = classID, currentUserEmail)
                                 if (response.isSuccessful) {
                                     students = response.body()?.students ?: emptyList()
                                     Log.d("debug","" + students.toString())

@@ -83,7 +83,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.projectkas.Module.ThemeMode
 import com.example.projectkas.Network.ClassUi
-import com.example.projectkas.Network.RetrofitInstance.api
 import com.example.projectkas.R
 import com.example.projectkas.ViewModel.SettingsViewModel
 import kotlinx.coroutines.launch
@@ -158,7 +157,7 @@ fun Settings(onLogout : () -> Unit,
             is AuthState.Authenticated -> {
                 isLoading = true
                 try {
-                    val response = RetrofitInstance.api.getClasses(
+                    val response = RetrofitInstance.getApi().getClasses(
                         userEmail = currentUserEmail
                     )
 
@@ -403,7 +402,7 @@ fun Settings(onLogout : () -> Unit,
                         coroutineScope.launch {
                             isLoading = true
                             try {
-                                val response = RetrofitInstance.api.updateClass(
+                                val response = RetrofitInstance.getApi().updateClass(
                                     classId = selectedClass!!.id,
                                     name = editedClassName,
                                     email = currentUserEmail
@@ -411,7 +410,7 @@ fun Settings(onLogout : () -> Unit,
 
                                 if (response.isSuccessful) {
                                     // refresh classes (getClasses returns ClassesResponse directly)
-                                    val refreshed = RetrofitInstance.api.getClasses(currentUserEmail)
+                                    val refreshed = RetrofitInstance.getApi().getClasses(currentUserEmail)
                                     classes = refreshed.classes
 
                                     showEditClassDialog = false
@@ -465,14 +464,14 @@ fun Settings(onLogout : () -> Unit,
                         coroutineScope.launch {
                             isLoading = true
                             try {
-                                val response = RetrofitInstance.api.deleteClass(
+                                val response = RetrofitInstance.getApi().deleteClass(
                                     classId = selectedClass!!.id,
                                     email = currentUserEmail
                                 )
 
                                 if (response.isSuccessful) {
                                     // refresh classes
-                                    val refreshed = RetrofitInstance.api.getClasses(currentUserEmail)
+                                    val refreshed = RetrofitInstance.getApi().getClasses(currentUserEmail)
                                     classes = refreshed.classes
                                     showDeleteClassDialog = false
                                     selectedClass = null

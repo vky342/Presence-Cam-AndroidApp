@@ -46,7 +46,8 @@ import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.example.projectkas.Network.RetrofitInstance.api
+import com.example.projectkas.Network.RetrofitInstance
+import com.example.projectkas.Network.RetrofitInstance.getApi
 import com.example.projectkas.Network.resizeAndCompress
 import com.example.projectkas.Network.uriToMultipart
 import com.example.projectkas.R
@@ -149,7 +150,7 @@ fun ProfileScreen(
 
             // call network on coroutine. Retrofit's suspend functions are main-safe, but body.bytes()
             // is blocking -> do the decoding on IO
-            val response: Response<ResponseBody> = api.getImageByUuidMultipart(req)
+            val response: Response<ResponseBody> = RetrofitInstance.getApi().getImageByUuidMultipart(req)
 
             if (response.isSuccessful) {
                 val body = response.body()
@@ -307,7 +308,7 @@ fun ProfileScreen(
                     coroutineScope.launch {
                         isLoading = true
                         try {
-                            val response = api.updateStudentMetadata(
+                            val response = RetrofitInstance.getApi().updateStudentMetadata(
                                 studentId = id,
                                 rollNo = roll.ifBlank { null },
                                 name = name.ifBlank { null },
@@ -416,7 +417,7 @@ fun ProfileScreen(
                     coroutineScope.launch {
                         isLoadingDelete = true
                         try {
-                            val response = api.deleteStudentById(
+                            val response = RetrofitInstance.getApi().deleteStudentById(
                                 studentId = id,
                                 email = currentUserEmail,
                                 classID = classID
@@ -507,7 +508,7 @@ fun ProfileScreen(
                                     }
 
 
-                                    val response = api.reenrollStudentEmbeddings(
+                                    val response = RetrofitInstance.getApi().reenrollStudentEmbeddings(
                                         images = imageParts,
                                         studentId = idPart,
                                         email = currentUserEmail,

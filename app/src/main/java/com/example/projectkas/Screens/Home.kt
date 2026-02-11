@@ -271,7 +271,7 @@ fun Home(
     LaunchedEffect(currentUserEmail) {
         try {
             isClassLoading = true
-            val res = RetrofitInstance.api.getClasses(
+            val res = RetrofitInstance.getApi().getClasses(
                 userEmail = currentUserEmail
             )
             classes = res.classes
@@ -434,7 +434,7 @@ fun Home(
                                     selectedClass.id.toRequestBody("text/plain".toMediaType())
 
                                 val response = if (debugMode) {
-                                    RetrofitInstance.api.debugRecognize(
+                                    RetrofitInstance.getApi().debugRecognize(
                                         files = imageParts,
                                         email = currentUserEmail,
                                         classId = classIdBody
@@ -444,7 +444,7 @@ fun Home(
                                         "ERR",
                                         "Home: ${imageParts} ${currentUserEmail} ${classIdBody}",
                                     )
-                                    RetrofitInstance.api.recognize(
+                                    RetrofitInstance.getApi().recognize(
                                         files = imageParts,
                                         email = currentUserEmail,
                                         classId = classIdBody

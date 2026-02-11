@@ -5,13 +5,10 @@ import android.graphics.Bitmap
 import android.net.Uri
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
-import okhttp3.OkHttpClient
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.ResponseBody
 import retrofit2.Response
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Multipart
@@ -19,7 +16,6 @@ import retrofit2.http.POST
 import retrofit2.http.Part
 import java.io.File
 import java.io.FileOutputStream
-import java.util.concurrent.TimeUnit
 import retrofit2.http.*
 
 data class RecognizedStudent(
@@ -246,10 +242,6 @@ fun uriToMultipart(
         }
     } ?: throw IllegalArgumentException("Unable to open URI")
 
-    if (tempFile.length() < 50_000) {
-        throw IllegalArgumentException("Image too small, likely a thumbnail")
-    }
-
     val requestBody = tempFile.asRequestBody(mimeType.toMediaType())
 
     return MultipartBody.Part.createFormData(
@@ -257,26 +249,6 @@ fun uriToMultipart(
         filename = tempFile.name,
         body = requestBody
     )
-}
-
-
-object RetrofitInstance {
-
-    val okHttpClient = OkHttpClient.Builder()
-        .connectTimeout(60, TimeUnit.SECONDS)
-        .writeTimeout(60, TimeUnit.SECONDS)
-        .readTimeout(60, TimeUnit.SECONDS)
-        .build()
-
-    val api: ApiService by lazy {
-        Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:8000/")
-            //.baseUrl("http://X.Y.Z.K:80/api/")
-            .client(okHttpClient)//
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-            .create(ApiService::class.java)
-    }
 }
 
 fun resizeAndCompress(
@@ -306,3 +278,5 @@ fun resizeAndCompress(
     }
     return file
 }
+
+

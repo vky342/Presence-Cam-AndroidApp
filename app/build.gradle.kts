@@ -22,6 +22,9 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Add this for desugaring support
+        multiDexEnabled = true
     }
 
     signingConfigs {
@@ -47,6 +50,9 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+
+        // Enable core library desugaring
+        isCoreLibraryDesugaringEnabled = true
     }
     kotlinOptions {
         jvmTarget = "11"
@@ -54,6 +60,12 @@ android {
     }
     buildFeatures {
         compose = true
+    }
+
+    packaging {
+        resources {
+            excludes += "META-INF/native-image/**"
+        }
     }
 }
 
@@ -104,7 +116,15 @@ dependencies {
     implementation(libs.coil.compose)
 
     //language
-    implementation("androidx.datastore:datastore-preferences:1.1.7")
+    implementation(libs.androidx.datastore.preferences)
+
+    //mongo
+    implementation("org.mongodb:mongodb-driver-sync:4.11.1") {
+        exclude(group = "org.mongodb", module = "bson-record-codec")
+    }
+
+    // Core library desugaring
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 
 }
 
