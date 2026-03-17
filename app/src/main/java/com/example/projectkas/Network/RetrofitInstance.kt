@@ -16,7 +16,6 @@ import org.json.JSONObject
 object RetrofitInstance {
 
     private const val RENDER_SERVICE_URL = "https://mongo-endpoint.onrender.com"
-
     private var baseUrl: String? = null
     private var retrofitInstance: Retrofit? = null
     private var isInitialized = false
@@ -35,7 +34,7 @@ object RetrofitInstance {
     fun initialize(onComplete: ((Boolean) -> Unit)? = null) {
         CoroutineScope(Dispatchers.IO).launch {
             println("🔄 Fetching base URL from Render service...")
-            baseUrl = fetchUrlFromRender()
+            baseUrl = "https://pcam.vky342.in"
 
             if (baseUrl != null) {
                 println("✅ Base URL loaded: $baseUrl")
